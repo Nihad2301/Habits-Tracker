@@ -1,0 +1,17 @@
+from sqlalchemy import Column, Integer, String
+from db.session import Base
+from sqlalchemy.orm import relationship
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+
+    habits = relationship("Habit", back_populates="user")
+    habit_completions = relationship("HabitCompletion", back_populates="user")
+    habit_analytics = relationship("HabitAnalytics", back_populates="user")
+    weekly_stats = relationship("WeeklyStats", back_populates="user")
+    monthly_stats = relationship("MonthlyStats", back_populates="user")
+    

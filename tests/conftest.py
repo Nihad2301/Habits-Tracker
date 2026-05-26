@@ -1,0 +1,126 @@
+import pytest
+from jose import jwt
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from fastapi.testclient import TestClient
+from core.jwt_utils import make_access_token, SECRET_KEY, ALGORITHM
+from datetime import timedelta
+
+from main import app
+from db.session import Base, get_db
+
+@pytest.fixture
+def test_db(tmp_path):
+    db_file = tmp_path / "test.db"
+    engine = create_engine(f"sqlite:///{db_file}", connect_args={"check_same_thread": False})
+    api_test_session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    
+    Base.metadata.create_all(bind=engine)
+
+    def override_get_db():
+        db = api_test_session()
+        try: 
+            yield db
+        finally:
+            db.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+
+@pytest.fixture
+def client1(test_db):
+    with TestClient(app) as c:
+        yield c 
+        print("Debug ")
+
+@pytest.fixture
+def client2(test_db):
+    with TestClient(app) as c:
+        yield c
+
+@pytest.fixture
+def auth_client1(client1):
+    user_payload1 = {
+        "username": "test_user1", 
+        "password": "test_password1"
+    }
+    register_user = client1.post("/register", json=user_payload1)
+    login_user = client1.post("/login", json=user_payload1)
+    
+    token = login_user.json()["access_token"]
+    client1.headers = {"Authorization": f"Bearer {token}"}
+        
+    return client1    
+
+@pytest.fixture
+def auth_client2(client2):
+    user_payload2 = {
+        "username": "test_user2", 
+        "password": "test_password2"
+    }
+    register_user = client2.post("/register", json=user_payload2)
+    login_user = client2.post("/login", json=user_payload2)
+    
+    token = login_user.json()["access_token"]
+    client2.headers = {"Authorization": f"Bearer {token}"}
+    
+    return client2
+
+@pytest.fixture
+def api_habit_factory():
+    def _api_habit_factory(*, auth_client):    
+        habit_payload = {
+            "name": "Test Habit", 
+            "description": "Test Description", 
+            "frequency": "Every day"
+            }
+        
+        habit = auth_client.post("/habits", json=habit_payload)
+
+        data = habit.json()
+        assert data["id"] is not None
+        for key, value in habit_payload.items():
+            assert data[key] == value 
+            
+        return habit
+    return _api_habit_factory
+
+@pytest.fixture
+def test_empty_or_missing_value():
+    def habit_payload(*, error_type: str):
+        if "empty" in error_type.lower():
+            payload = {
+            "name": "",
+            "description": "Something"
+        }
+        elif "missing" in error_type.lower():
+            payload = {
+            "name": "Some Value"
+        }
+        
+        return payload
+    return habit_payload
+
+@pytest.fixture
+def assert_status_code():
+    def _assert_status_code(response, status_code):
+        assert response.status_code == status_code, response.text
+    return _assert_status_code    
+
+@pytest.fixture
+def expired_token():
+    token = make_access_token(data={"sub": "1"}, expires_delta=timedelta(seconds=-1))
+    return token  
+
+@pytest.fixture
+def missing_sub_field():
+    def _missing_sub_field():
+        # Create a valid JWT payload without 'sub' field
+        payload = {
+            "exp": 9999999999,  # Far future expiration
+            # No 'sub' field - this is what we're testing
+        }
+        
+        # Encode as JWT without 'sub' field
+        token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+        return token    
+    return _missing_sub_field
