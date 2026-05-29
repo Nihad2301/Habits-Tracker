@@ -17,3 +17,10 @@ class WeeklyStatsSchema(BaseModel):
     
     class Config:
         from_attributes = True
+
+class MonthlyStatsSchema(BaseModel):
+    month_start: date
+    days_with_completions: int
+    
+    class Config:
+        from_attributes = True

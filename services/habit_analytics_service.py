@@ -133,36 +133,34 @@ def habit_analytics(*, db: Session, user: User, habit_id: int):
         total_completions=total_completions(db=db, user=user, habit_id=habit.id)
     )
 
+def _get_period_stats(completions: list, period_name: str, period_days: int) -> list:
+    if not completions:
+        return []
+    
+    period_start = min(c.completion_date for c in completions)
+    total_days = (datetime.datetime.now().date() - period_start).days
 
-def weekly_days_with_completions(db: Session, user: User, habit_id: int) -> list:
+    period_stats = []
+
+    period_count = total_days // period_days + 1
+    
+    for i in range(period_count):
+        period_end = period_start + datetime.timedelta(days=period_days - 1)
+        period_completions = [
+            c for c in completions 
+            if period_start <= c.completion_date <= period_end
+        ]
+        period_stats.append({
+            f"{period_name}_start": period_start,
+            "days_with_completions": len(period_completions)
+        })
+        period_start += datetime.timedelta(days=period_days)
+    
+    return period_stats
+
+def get_period_stats(*, db: Session, user: User, habit_id: int, period_name: str, period_days: int):
     completions = db.query(HabitCompletion).filter(
         HabitCompletion.habit_id == habit_id,
         HabitCompletion.user_id == user.id
     ).all()
-    
-    if not completions:
-        return []
-
-    week_start = min(c.completion_date for c in completions)
-    week_end = week_start + datetime.timedelta(days=6)
-
-    total_days = (datetime.datetime.now().date() - week_start).days
-    week_count = total_days // 7 + 1
-    
-    weekly_data = []
-
-    for i in range(week_count):
-        week_completions = [
-            c for c in completions 
-            if week_start <= c.completion_date <= week_end
-        ]
-        weekly_data.append({
-            "week_start": week_start,
-            "days_with_completions": len(week_completions)
-        })
-        week_start += datetime.timedelta(days=7)
-        week_end = week_start + datetime.timedelta(days=6)
-    
-    return weekly_data
-
-
+    return _get_period_stats(completions, period_name=period_name, period_days=period_days)
