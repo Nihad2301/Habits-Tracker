@@ -5,8 +5,11 @@ from sqlalchemy.exc import SQLAlchemyError
 
 DATABASE_URL = settings.DATABASE_URL
 
-engine = create_engine(DATABASE_URL, connect_args = {"check_same_thread" : False})
-
+# In session.py, line 8
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autoflush=False, bind=engine)
 
 Base = declarative_base()
