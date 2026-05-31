@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status, Depends
 from jose import jwt
+from config import settings
 from jose.exceptions import JWTError, ExpiredSignatureError
 from datetime import datetime, timedelta
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -8,9 +9,9 @@ from db.models.core_models import User
 from exceptions import ExpiredTokenError, InvalidTokenError
 from db.session import get_db
 
-SECRET_KEY = "your-secret-key-here"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 def make_access_token(data: dict, expires_delta: timedelta | None = None):
     if expires_delta:
@@ -46,6 +47,8 @@ def get_current_user(
         detail="Could not authorize"
         )
     
+    print("Credentials:", credentials)
+
     if credentials is None:
         raise credentials_exception
 

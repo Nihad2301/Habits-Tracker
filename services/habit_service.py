@@ -4,9 +4,10 @@ from typing import Optional
 from db.models.core_models import User
 from db.models.core_models import Habit
 from db.session import _commit_safely
-from exceptions import NotFoundError, AllFieldsEmptyError, AlreadyExistsError
+from exceptions import NotFoundError, AllFieldsEmptyError, AlreadyExistsError, ForbiddenError
 import pytz
 from datetime import datetime
+from config import settings
 
 def _already_exists(e: IntegrityError) -> bool:
     msg = str(getattr(e, "orig", e)).lower()
@@ -19,14 +20,14 @@ def _already_exists(e: IntegrityError) -> bool:
                                           
 
 def _get_owned_habit(db: Session, habit_id: int, user: User) -> Habit:
-    habit = db.query(Habit).filter(
-        Habit.id == habit_id,
-        Habit.user_id == user.id
-        ).first()
-
+    habit = db.query(Habit).filter(Habit.id == habit_id).first()
+    
     if habit is None:
-        raise NotFoundError()   
-
+        raise NotFoundError()
+    
+    if habit.user_id != user.id:
+        raise ForbiddenError()
+    
     return habit
 
 
@@ -35,7 +36,7 @@ def add_habit(
         user: User, db: Session, name=None, 
         frequency=None, description=None
         ) -> Habit:
-    local_tz = pytz.timezone("Asia/Baku")
+    local_tz = pytz.timezone(settings.TIMEZONE)
     now = datetime.now(local_tz)
     
     new_habit = Habit(

@@ -27,7 +27,7 @@ def mark_habit_as_completed(
     return completed_habit
 
 
-@completion_router.delete("/habits/{habit_id}/complete", status_code=201)
+@completion_router.delete("/habits/{habit_id}/complete")
 def unmark_habit(
     habit_id: int,
     db_session: Session = Depends(get_db),

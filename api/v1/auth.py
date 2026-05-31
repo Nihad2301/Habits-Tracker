@@ -13,7 +13,7 @@ class AuthResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int
 
-@auth_router.post("/register", response_model=UserRead)
+@auth_router.post("/register", response_model=UserRead, status_code=201)
 def register(user: UserBuild, db_session : Session = Depends(get_db)):
     registering_user = register_user(
         db=db_session, 

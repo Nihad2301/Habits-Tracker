@@ -61,7 +61,7 @@ def test_user_can_unmark_only_completed_habit(
     unmark_completed_habit = auth_client1.delete(
         f"/habits/{habit_id}/complete"
         )
-    assert unmark_completed_habit.status_code == 201, unmark_completed_habit.text
+    assert unmark_completed_habit.status_code == 200, unmark_completed_habit.text
 
 
 def test_user_cannot_mark_or_unmark_non_existent_habit(auth_client1):

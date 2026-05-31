@@ -55,9 +55,9 @@ class NotMarkedYetError(AppException):
     status_code = 409
     default_message = "This habit is not marked today"    
 
-class UnauthorizedError(AppException):
-    status_code = 401
-    default_message = "Incorrect user"  
+class ForbiddenError(AppException):
+    status_code = 403
+    default_message = "Forbidden"  
 
 class ExpiredTokenError(AppException):
     status_code = 401

@@ -65,7 +65,7 @@ def update_habit(
 
     return updated_habit
 
-@habit_router.delete("/habit/{habit_id}")
+@habit_router.delete("/habits/{habit_id}")
 def delete_habit(habit_id: int,
     db_session: Session = Depends(get_db),
     user: User = Depends(get_current_user)

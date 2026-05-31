@@ -7,6 +7,7 @@ from exceptions import NotFoundError, AlreadyMarkedTodayError, NotMarkedYetError
 from db.session import _commit_safely
 from datetime import date, datetime
 import pytz
+from config import settings
 
 
 def _is_already_marked_error(e: IntegrityError) -> bool:
@@ -40,7 +41,7 @@ def mark_completed_habit(habit_id: int, db: Session, user: User) -> HabitComplet
     habit = _get_owned_habit(db=db, habit_id=habit_id, user=user)
 
     # Get local timezone (you can change this to your specific timezone)
-    local_tz = pytz.timezone('Asia/Baku')  # UTC+4 for your timezone
+    local_tz = pytz.timezone(settings.TIMEZONE)
     local_time = datetime.now(local_tz)
     local_date = local_time.date()
     

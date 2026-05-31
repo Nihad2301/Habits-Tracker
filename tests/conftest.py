@@ -29,8 +29,7 @@ def test_db(tmp_path):
 @pytest.fixture
 def client1(test_db):
     with TestClient(app) as c:
-        yield c 
-        print("Debug ")
+        yield c
 
 @pytest.fixture
 def client2(test_db):
@@ -64,6 +63,11 @@ def auth_client2(client2):
     client2.headers = {"Authorization": f"Bearer {token}"}
     
     return client2
+
+@pytest.fixture
+def unauthenticated_client(test_db):
+    with TestClient(app) as c:
+        yield c
 
 @pytest.fixture
 def api_habit_factory():

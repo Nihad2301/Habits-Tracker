@@ -40,6 +40,6 @@ def test_user_cannot_access_other_users_habit(
     # User2 tries to access user1's habit
     habit_id = habit1.json()["id"]
     fetched = auth_client2.get(f"/habits/{habit_id}")
-    assert fetched.status_code == 404, fetched.text
+    assert fetched.status_code == 403, fetched.text
 
 

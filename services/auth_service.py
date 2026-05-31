@@ -27,7 +27,6 @@ def register_user(db: Session, Username: str, Password: str):
 
 def login_user(db: Session, Username, Password):
     user = db.query(User).filter(User.username == Username).first()
-    print(user.username, "THIS IS THE USERNAME") 
     if not user:
         raise NotFoundError(
             message="User is not found"
