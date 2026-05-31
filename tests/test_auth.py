@@ -38,11 +38,19 @@ def test_login_invalid_credentials(unauthenticated_client):
         "username": "test_user", 
         "password": "wrong_password"
     }
-    
+
     register_user = unauthenticated_client.post("/register", json=correct_payload)
     assert register_user.status_code == 201
     login_user = unauthenticated_client.post("/login", json=wrong_payload)
     assert login_user.status_code == 401
+
+def test_login_nonexistent_user(unauthenticated_client):
+    user_payload = {
+        "username": "nonexistent_user", 
+        "password": "test_password"
+    }
+    login_user = unauthenticated_client.post("/login", json=user_payload)
+    assert login_user.status_code == 404
 
 
     
