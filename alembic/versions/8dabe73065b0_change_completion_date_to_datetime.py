@@ -26,7 +26,7 @@ def upgrade() -> None:
                'habit_id INTEGER NOT NULL, '
                'user_id INTEGER NOT NULL, '
                'completion_date DATE NOT NULL DEFAULT CURRENT_DATE, '
-               'completion_time DATETIME DEFAULT CURRENT_TIMESTAMP, '
+               'completion_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, '
                'PRIMARY KEY (id), '
                'FOREIGN KEY(habit_id) REFERENCES habits (id) ON DELETE CASCADE, '
                'FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, '
