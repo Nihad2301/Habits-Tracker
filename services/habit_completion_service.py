@@ -22,14 +22,9 @@ def _is_already_marked_error(e: IntegrityError) -> bool:
         ] 
         return all(column in msg for column in required_columns)
     
-    # Check for PostgreSQL error message
-    if "duplicate key" in msg and "unique constraint" in msg:
-        required_columns = [
-            "habits_completion.habit_id",
-            "habits_completion.user_id",
-            "habits_completion.completion_date"
-        ]
-        return all(column in msg for column in required_columns)
+    # Check for PostgreSQL error message (any duplicate key violation on habits_completion)
+    if "duplicate key" in msg and "unique constraint" in msg and "habits_completion" in msg:
+        return True
     
     return False
 
@@ -54,8 +49,6 @@ def mark_completed_habit(habit_id: int, db: Session, user: User) -> HabitComplet
     local_time = datetime.now(local_tz)
     local_date = local_time.date()
     
-    print(f"DEBUG: Saving - habit_id={habit_id}, user_id={user.id}, completion_date={local_date}")
-    
     completed_habit = HabitCompletion(
         habit_id=habit.id,
         user_id=habit.user_id,
@@ -65,16 +58,9 @@ def mark_completed_habit(habit_id: int, db: Session, user: User) -> HabitComplet
 
     try:
         _commit_safely(db=db, obj=completed_habit)
-        print(f"DEBUG: Saved successfully, id={completed_habit.id}")
     except IntegrityError as e:
-        print(f"DEBUG: IntegrityError caught: {e}")
-        print(f"DEBUG: Error message: {str(getattr(e, 'orig', e))}")
         if _is_already_marked_error(e):
-            print(f"DEBUG: Raising AlreadyMarkedTodayError")
-            raise AlreadyMarkedTodayError()
-        else:
-            print(f"DEBUG: Not a duplicate error, re-raising")
-            raise
+            raise AlreadyMarkedTodayError()   
         
     return completed_habit
    
