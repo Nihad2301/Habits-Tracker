@@ -54,8 +54,6 @@ def mark_completed_habit(habit_id: int, db: Session, user: User) -> HabitComplet
     local_time = datetime.now(local_tz)
     local_date = local_time.date()
     
-    print(f"DEBUG: Saving completion - habit_id={habit_id}, user_id={user.id}, completion_date={local_date}")
-    
     completed_habit = HabitCompletion(
         habit_id=habit.id,
         user_id=habit.user_id,
@@ -65,9 +63,7 @@ def mark_completed_habit(habit_id: int, db: Session, user: User) -> HabitComplet
 
     try:
         _commit_safely(db=db, obj=completed_habit)
-        print(f"DEBUG: Completion saved successfully with id={completed_habit.id}")
     except IntegrityError as e:
-        print(f"DEBUG: IntegrityError: {e}")
         if _is_already_marked_error(e):
             raise AlreadyMarkedTodayError()   
         
@@ -98,16 +94,10 @@ def show_marked_habits(db: Session, user: User) -> list[Habit]:
     local_time = datetime.now(local_tz)
     local_date = local_time.date()
     
-    print(f"DEBUG: Querying completions - user_id={user.id}, completion_date={local_date}")
-    
     habits = db.query(HabitCompletion).filter(
         HabitCompletion.user_id == user.id,
         HabitCompletion.completion_date == local_date
     ).all()
-    
-    print(f"DEBUG: Found {len(habits)} completions")
-    for habit in habits:
-        print(f"DEBUG: Completion - id={habit.id}, habit_id={habit.habit_id}, completion_date={habit.completion_date}")
 
     return habits
 

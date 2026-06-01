@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 class HabitCompletion(Base):
     __tablename__ = "habits_completion"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
 
     habit_id = Column(
         Integer, 
