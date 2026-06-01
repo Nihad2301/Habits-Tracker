@@ -47,7 +47,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['habit_id'], ['habits.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('user_id', 'habit_id', 'date', name='uq_user_habit_date')
+    sa.UniqueConstraint('user_id', 'habit_id', 'date', name='uq_analytics_user_habit_date')
     )
     op.create_index(op.f('ix_habit_analytics_id'), 'habit_analytics', ['id'], unique=False)
     op.create_table('monthly_stats',
