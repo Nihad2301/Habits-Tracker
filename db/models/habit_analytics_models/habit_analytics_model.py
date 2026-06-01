@@ -36,7 +36,7 @@ class HabitAnalytics(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
     
     __table_args__ = (
-        UniqueConstraint('user_id', 'habit_id', 'date', name='uq_user_habit_date'),
+        UniqueConstraint('user_id', 'habit_id', 'date', name='uq_analytics_user_habit_date'),
     )
 
     user = relationship("User", back_populates="habit_analytics")
