@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from jose import JWTError
 from exceptions import (
@@ -14,6 +15,14 @@ from api.v1.habits_completion import completion_router
 from api.v1.habit_analytics import analytics_router
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.add_exception_handler(AppException, custom_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)

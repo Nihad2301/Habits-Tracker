@@ -13,16 +13,25 @@ from config import settings
 def _is_already_marked_error(e: IntegrityError) -> bool:
     msg = str(getattr(e, "orig", e)).lower()
 
-    if "unique constraint failed" not in msg:
-        return False
-
-    required_columns = [
-        "habits_completion.habit_id",
-        "habits_completion.user_id",
-        "habits_completion.completion_date"
-    ] 
-
-    return all(column in msg for column in required_columns)
+    # Check for SQLite error message
+    if "unique constraint failed" in msg:
+        required_columns = [
+            "habits_completion.habit_id",
+            "habits_completion.user_id",
+            "habits_completion.completion_date"
+        ] 
+        return all(column in msg for column in required_columns)
+    
+    # Check for PostgreSQL error message
+    if "duplicate key" in msg and "unique constraint" in msg:
+        required_columns = [
+            "habits_completion.habit_id",
+            "habits_completion.user_id",
+            "habits_completion.completion_date"
+        ]
+        return all(column in msg for column in required_columns)
+    
+    return False
 
 
 def _get_owned_habit(db: Session, habit_id: int, user: User):
