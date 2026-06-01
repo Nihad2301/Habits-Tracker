@@ -54,6 +54,8 @@ def mark_completed_habit(habit_id: int, db: Session, user: User) -> HabitComplet
     local_time = datetime.now(local_tz)
     local_date = local_time.date()
     
+    print(f"DEBUG: Saving - habit_id={habit_id}, user_id={user.id}, completion_date={local_date}")
+    
     completed_habit = HabitCompletion(
         habit_id=habit.id,
         user_id=habit.user_id,
@@ -63,9 +65,16 @@ def mark_completed_habit(habit_id: int, db: Session, user: User) -> HabitComplet
 
     try:
         _commit_safely(db=db, obj=completed_habit)
+        print(f"DEBUG: Saved successfully, id={completed_habit.id}")
     except IntegrityError as e:
+        print(f"DEBUG: IntegrityError caught: {e}")
+        print(f"DEBUG: Error message: {str(getattr(e, 'orig', e))}")
         if _is_already_marked_error(e):
-            raise AlreadyMarkedTodayError()   
+            print(f"DEBUG: Raising AlreadyMarkedTodayError")
+            raise AlreadyMarkedTodayError()
+        else:
+            print(f"DEBUG: Not a duplicate error, re-raising")
+            raise
         
     return completed_habit
    
