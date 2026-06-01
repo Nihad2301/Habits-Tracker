@@ -27,7 +27,8 @@ def upgrade() -> None:
     conn = op.get_bind()
     try:
         conn.execute(text('ALTER TABLE habits_completion ADD CONSTRAINT uq_habit_user_date UNIQUE (habit_id, user_id, completion_date)'))
-    except Exception:
+    except Exception as e:
+        print(f"Error adding unique constraint: {e}")
         # Constraint might already exist
         pass
     # ### end Alembic commands ###
