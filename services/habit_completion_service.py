@@ -90,9 +90,13 @@ def unmark_completed_habit(db: Session, habit_id: int, user: User) -> str:
 
 
 def show_marked_habits(db: Session, user: User) -> list[Habit]:
+    local_tz = pytz.timezone(settings.TIMEZONE)
+    local_time = datetime.now(local_tz)
+    local_date = local_time.date()
+    
     habits = db.query(HabitCompletion).filter(
         HabitCompletion.user_id == user.id,
-        HabitCompletion.completion_date == date.today()
+        HabitCompletion.completion_date == local_date
     ).all()
 
     return habits
