@@ -22,5 +22,8 @@ EXPOSE 8000
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 
-# Run the application with uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Make startup script executable
+RUN chmod +x start.sh
+
+# Run the application with startup script
+CMD ["./start.sh"]
