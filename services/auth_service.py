@@ -1,14 +1,16 @@
 from datetime import datetime, timedelta
 import secrets
-from db.models.core_models import EmailVerificationToken
+from db.models.core_models.email_verification_token_model import EmailVerificationToken
 from sqlalchemy.orm import Session
 from db.models.core_models import User
+from services.user_service import get_current_user
 from core.security import hash_password, verify_password
 from exceptions import (
     NotFoundError, 
     IncorrectPasswordError, 
     AlreadyExistsError, 
-    WeakPasswordError
+    WeakPasswordError,
+    ExpiredTokenError
 )
 
 def register_user(db: Session, Username: str, Password: str):
@@ -54,6 +56,34 @@ def generate_verification_token(db: Session, user_id: int):
     db.add(verification_token)
     db.commit()
     db.refresh(verification_token)
+    
+    return verification_token
+
+def verify_email(db: Session, token: str):
+    verification_token = db.query(EmailVerificationToken).filter(EmailVerificationToken.token == token).first()
+    if not verification_token:
+        raise NotFoundError(
+            message="Verification token not found"
+        )
+    
+    if verification_token.is_used:
+        raise AlreadyExistsError(
+            message="Verification token already used"
+        )
+    
+    if verification_token.expires_at < datetime.utcnow():
+        raise ExpiredTokenError(
+            message="Verification token expired"
+        )
+    
+    verification_token.is_used = 1
+
+    user = db.query(User).filter(User.id == verification_token.user_id).first()
+    user.is_verified = True
+
+    db.commit()
+    db.refresh(verification_token)
+    db.refresh(user)
     
     return verification_token
 
