@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+import secrets
+from db.models.core_models import EmailVerificationToken
 from sqlalchemy.orm import Session
 from db.models.core_models import User
 from core.security import hash_password, verify_password
@@ -37,4 +40,20 @@ def login_user(db: Session, Username, Password):
         raise IncorrectPasswordError()
 
     return user
+
+def generate_verification_token(db: Session, user_id: int):
+    token = secrets.urlsafe_b64encode(secrets.token_bytes(32)).decode()
+    expires_at = datetime.utcnow() + timedelta(hours=24)
+    
+    verification_token = EmailVerificationToken(
+        user_id=user_id,
+        token=token,
+        expires_at=expires_at
+    )
+    
+    db.add(verification_token)
+    db.commit()
+    db.refresh(verification_token)
+    
+    return verification_token
 
