@@ -13,7 +13,7 @@ from exceptions import (
     ExpiredTokenError
 )
 
-def register_user(db: Session, Username: str, Password: str):
+def register_user(db: Session, Username: str, Password: str, Email: str):
     exists = db.query(User).filter(User.username == Username).first()
     if exists:
         raise AlreadyExistsError(
@@ -23,7 +23,11 @@ def register_user(db: Session, Username: str, Password: str):
         raise WeakPasswordError()
     
     hashed = hash_password(Password)
-    new_user = User(username=Username, hashed_password=hashed)
+    new_user = User(
+        username=Username, 
+        hashed_password=hashed, 
+        email=Email
+    )
 
     db.add(new_user)
     db.commit()

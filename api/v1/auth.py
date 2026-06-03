@@ -4,7 +4,13 @@ from sqlalchemy.orm import Session
 from db.session import get_db
 from schemas.user_schema import UserBuild, UserRead, Login
 from core.jwt_utils import make_access_token
-from services.auth_service import register_user, login_user
+from services.auth_service import (
+    register_user, 
+    login_user, 
+    generate_verification_token, 
+    verify_email
+    )
+from services.email_service import send_verification_email
 
 auth_router = APIRouter()
 
@@ -18,8 +24,12 @@ def register(user: UserBuild, db_session : Session = Depends(get_db)):
     registering_user = register_user(
         db=db_session, 
         Username=user.username,
-        Password=user.password
+        Password=user.password,
+        Email=user.email
         ) 
+
+    verification_token = generate_verification_token(db=db_session, user_id=registering_user.id)
+    send_email = send_verification_email(email=registering_user.email, token=verification_token.token)
 
     return registering_user
 
@@ -37,3 +47,8 @@ def login(logging_user: Login, session_db: Session = Depends(get_db)):
         access_token=access_token,
         expires_in=1800
         )
+
+@auth_router.get("/verify-email")
+def email_verification(token: str, db_session: Session = Depends(get_db)):
+    verify_email(token=token, db=db_session)
+    return {"message": "Email verified successfully"}
