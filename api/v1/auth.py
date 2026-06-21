@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from db.session import get_db
+from db.models.core_models import User
 from schemas.user_schema import UserBuild, UserRead, Login
-from core.jwt_utils import make_access_token
+from core.jwt_utils import make_access_token, get_current_user
 from services.auth_service import (
     register_user, 
     login_user, 
@@ -55,6 +56,16 @@ def email_verification(token: str, db_session: Session = Depends(get_db)):
     return {"message": "Email verified successfully"}
 
 @auth_router.post("/resend-verification-email")
-def resend_verification_email(email: str, db_session: Session = Depends(get_db)):
+def resend_verification_email(
+    email: str = None, 
+    db_session: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+    ):
+    if current_user:
+        email = current_user.email
+     
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+    
     resend_verification(db=db_session, email=email)
     return {"message": "Verification email sent successfully"}
