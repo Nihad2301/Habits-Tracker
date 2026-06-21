@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 import secrets
 from db.models.core_models.email_verification_token_model import EmailVerificationToken
+from email_service import send_verification_email
 from sqlalchemy.orm import Session
 from db.models.core_models import User
-from services.user_service import get_current_user
 from core.security import hash_password, verify_password
 from exceptions import (
     NotFoundError, 
@@ -64,7 +64,9 @@ def generate_verification_token(db: Session, user_id: int):
     return verification_token
 
 def verify_email(db: Session, token: str):
-    verification_token = db.query(EmailVerificationToken).filter(EmailVerificationToken.token == token).first()
+    verification_token = db.query(EmailVerificationToken).filter(
+        EmailVerificationToken.token == token
+    ).first()
     if not verification_token:
         raise NotFoundError(
             message="Verification token not found"
@@ -90,4 +92,19 @@ def verify_email(db: Session, token: str):
     db.refresh(user)
     
     return verification_token
+
+def resend_verification(db: Session, email: str):
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise NotFoundError(
+            message="User not found"
+        )
+    if user.is_verified:
+        raise AlreadyExistsError(
+            message="User already verified"
+        )
+    
+    token = generate_verification_token(db, user.id)    
+    resend_email = send_verification_email(email=user.email, token=token.token)
+    return resend_email
 

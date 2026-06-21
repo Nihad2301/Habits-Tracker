@@ -8,7 +8,8 @@ from services.auth_service import (
     register_user, 
     login_user, 
     generate_verification_token, 
-    verify_email
+    verify_email,
+    resend_verification
     )
 from services.email_service import send_verification_email
 
@@ -52,3 +53,8 @@ def login(logging_user: Login, session_db: Session = Depends(get_db)):
 def email_verification(token: str, db_session: Session = Depends(get_db)):
     verify_email(token=token, db=db_session)
     return {"message": "Email verified successfully"}
+
+@auth_router.post("/resend-verification-email")
+def resend_verification_email(email: str, db_session: Session = Depends(get_db)):
+    resend_verification(db=db_session, email=email)
+    return {"message": "Verification email sent successfully"}
