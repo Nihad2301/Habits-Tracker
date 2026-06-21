@@ -17,7 +17,7 @@ A FastAPI-based habit tracking application with user authentication, habit manag
 ## Tech Stack
 
 - **Backend**: FastAPI
-- **Database**: SQLite with SQLAlchemy
+- **Database**: PostgreSQL with SQLAlchemy
 - **Authentication**: JWT (python-jose)
 - **Password Hashing**: bcrypt
 - **Migrations**: Alembic
