@@ -26,7 +26,6 @@ def send_email(email: str, token: str, email_type: str):
         """
     else:
         raise ValueError(f"Invalid email type: {email_type}")
-    
 
     try:
         params = {
