@@ -10,7 +10,9 @@ from services.auth_service import (
     login_user, 
     generate_token, 
     verify_email,
-    resend_verification
+    resend_verification,
+    password_reset,
+    reset_password
     )
 from services.email_service import send_email
 
@@ -35,10 +37,10 @@ def register(user: UserBuild, db_session : Session = Depends(get_db)):
         user_id=registering_user.id,
         token_type="email_verification"
         )
-    send_verification_email = send_email(
+    send_email(
         email=registering_user.email, 
         token=verification_token.token,
-        email_type="verification"
+        email_type="email_verification"
         )
 
     return registering_user
@@ -77,3 +79,29 @@ def resend_verification_email(
     
     resend_verification(db=db_session, email=email)
     return {"message": "Verification email sent successfully"}
+
+@auth_router.post("/password-reset")
+def password_reset_request(
+    email: str = None, 
+    db_session: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+    ):
+    if current_user:
+        email = current_user.email
+    
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+    
+    password_reset(db=db_session, email=email)
+    return {"message": "Password reset email sent successfully"}
+
+@auth_router.post("/reset-password")
+def reset_password_endpoint(
+    token: str,
+    new_password: str,
+    db_session: Session = Depends(get_db)
+    ):
+
+    reset_password(db=db_session, token=token, new_password=new_password)
+    return {"message": "Password reset successfully"}
+
