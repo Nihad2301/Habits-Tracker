@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 from db.models.core_models import User
 from core.security import hash_password
-from exceptions import NotFoundError
+from exceptions import NotFoundError, WeakPasswordError, AllFieldsEmptyError
 from core.jwt_utils import get_current_user
 
-
+# TODO: Add 'Show_all_users' for admin only
 def show_all_users(db: Session):
     all_users = db.query(User).all()
 
@@ -16,10 +16,13 @@ def show_all_users(db: Session):
 
 def update(user: User, db: Session, username=None, password=None):     
     current_user = db.query(User).filter(User.id == user.id).first()
-     
+    if not username and not password:
+        raise AllFieldsEmptyError()
     if isinstance(username, str):        
         current_user.username = username
     if isinstance(password, str):
+        if len(password) < 8:
+            raise WeakPasswordError()
         hashed = hash_password(password)
         current_user.hashed_password = hashed
 
