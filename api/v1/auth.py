@@ -12,7 +12,7 @@ from services.auth_service import (
     verify_email,
     resend_verification
     )
-from services.email_service import send_verification_email
+from services.email_service import send_email
 
 auth_router = APIRouter()
 
@@ -35,9 +35,10 @@ def register(user: UserBuild, db_session : Session = Depends(get_db)):
         user_id=registering_user.id,
         token_type="email_verification"
         )
-    send_email = send_verification_email(
+    send_verification_email = send_email(
         email=registering_user.email, 
-        token=verification_token.token
+        token=verification_token.token,
+        email_type="verification"
         )
 
     return registering_user

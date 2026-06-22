@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import secrets
 from db.models.core_models.email_verification_token_model import EmailVerificationToken
 from db.models.core_models.password_reset_token_model import PasswordResetToken
-from email_service import send_verification_email
+from email_service import send_email
 from sqlalchemy.orm import Session
 from db.models.core_models import User
 from core.security import hash_password, verify_password
@@ -114,6 +114,10 @@ def resend_verification(db: Session, email: str):
         )
     
     token = generate_token(db, user.id, "email_verification")    
-    resend_email = send_verification_email(email=user.email, token=token.token)
+    resend_email = send_email(
+        email=user.email, 
+        token=token.token, 
+        email_type="verification"
+    )
     return resend_email
 
