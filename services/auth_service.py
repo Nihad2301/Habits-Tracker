@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import secrets
 from db.models.core_models.email_verification_token_model import EmailVerificationToken
+from db.models.core_models.password_reset_token_model import PasswordResetToken
 from email_service import send_verification_email
 from sqlalchemy.orm import Session
 from db.models.core_models import User
@@ -47,22 +48,30 @@ def login_user(db: Session, Username, Password):
 
     return user
 
-def generate_verification_token(db: Session, user_id: int):
-    token = secrets.urlsafe_b64encode(secrets.token_bytes(32)).decode()
+def generate_token(db: Session, user_id: int, token_type: str):
+    token_string = secrets.urlsafe_b64encode(secrets.token_bytes(32)).decode()
     expires_at = datetime.utcnow() + timedelta(hours=24)
-    
-    verification_token = EmailVerificationToken(
-        user_id=user_id,
-        token=token,
-        expires_at=expires_at
-    )
-    
-    db.add(verification_token)
-    db.commit()
-    db.refresh(verification_token)
-    
-    return verification_token
 
+    if token_type == "email_verification":
+        token = EmailVerificationToken(
+            user_id=user_id,
+            token=token_string,
+            expires_at=expires_at
+        )
+    elif token_type == "password_reset":
+        token = PasswordResetToken(
+            user_id=user_id,
+            token=token_string,
+            expires_at=expires_at
+        )
+    else:
+        raise ValueError(f"Invalid token type: {token_type}")
+
+    db.add(token)
+    db.commit()
+    db.refresh(token)
+    return token
+    
 def verify_email(db: Session, token: str):
     verification_token = db.query(EmailVerificationToken).filter(
         EmailVerificationToken.token == token
@@ -104,7 +113,7 @@ def resend_verification(db: Session, email: str):
             message="User already verified"
         )
     
-    token = generate_verification_token(db, user.id)    
+    token = generate_token(db, user.id, "email_verification")    
     resend_email = send_verification_email(email=user.email, token=token.token)
     return resend_email
 

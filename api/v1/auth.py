@@ -8,7 +8,7 @@ from core.jwt_utils import make_access_token, get_current_user
 from services.auth_service import (
     register_user, 
     login_user, 
-    generate_verification_token, 
+    generate_token, 
     verify_email,
     resend_verification
     )
@@ -30,8 +30,15 @@ def register(user: UserBuild, db_session : Session = Depends(get_db)):
         Email=user.email
         ) 
 
-    verification_token = generate_verification_token(db=db_session, user_id=registering_user.id)
-    send_email = send_verification_email(email=registering_user.email, token=verification_token.token)
+    verification_token = generate_token(
+        db=db_session, 
+        user_id=registering_user.id,
+        token_type="email_verification"
+        )
+    send_email = send_verification_email(
+        email=registering_user.email, 
+        token=verification_token.token
+        )
 
     return registering_user
 
