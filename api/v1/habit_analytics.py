@@ -11,7 +11,7 @@ from schemas.habit_analytics_schemas import (
     WeeklyStatsSchema, 
     MonthlyStatsSchema
 )
-from core.jwt_utils import get_current_user
+from core.jwt_utils import get_current_user, require_verified_email
 
 analytics_router = APIRouter()
 
@@ -19,7 +19,7 @@ analytics_router = APIRouter()
 def get_habit_analytics(
     habit_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_verified_email)
 ):
     # Get analytics data
     analytics_data = habit_analytics(db=db, user=current_user, habit_id=habit_id)
@@ -31,7 +31,7 @@ def get_habit_analytics(
 def get_weekly_stats(
     habit_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_verified_email)
 ):
     # Get weekly stats
     weekly_stats = get_period_stats(db=db, user=current_user, habit_id=habit_id, period_name="week", period_days=7)
@@ -43,7 +43,7 @@ def get_weekly_stats(
 def get_monthly_stats(
     habit_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_verified_email)
 ):
     # Get monthly stats
     monthly_stats = get_period_stats(db=db, user=current_user, habit_id=habit_id, period_name="month", period_days=30)

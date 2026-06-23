@@ -62,4 +62,11 @@ def get_current_user(
 
     return user
 
+def require_verified_email(user: User = Depends(get_current_user)):
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified"
+        )
+    return user
 

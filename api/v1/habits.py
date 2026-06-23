@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from db.session import get_db
-from core.jwt_utils import get_current_user
+from core.jwt_utils import get_current_user, require_verified_email
 from services.habit_service import (
     retrieve_habit, 
     update,
@@ -17,7 +17,7 @@ habit_router = APIRouter()
 @habit_router.post("/habits", response_model=HabitRead, status_code=201)
 def add_new_habit(
     habit: HabitBuild,
-    current_one: User = Depends(get_current_user),
+    current_one: User = Depends(require_verified_email),
     db_session: Session = Depends(get_db)
 ):
     habit_data = habit.model_dump(exclude_unset=True)
@@ -33,7 +33,7 @@ def add_new_habit(
 @habit_router.get("/habits", response_model=dict[str, list[HabitRead]])
 def get_all_habits(
     db_session: Session = Depends(get_db), 
-    user: User = Depends(get_current_user)
+    user: User = Depends(require_verified_email)
 ):
     all_habits = get_all(db=db_session, user=user)
     return {"habits": all_habits}
@@ -42,7 +42,7 @@ def get_all_habits(
 def get_habit(
     habit_id: int, 
     db_session: Session = Depends(get_db), 
-    user: User = Depends(get_current_user)
+    user: User = Depends(require_verified_email)
 ):
     habit = retrieve_habit(habit_id=habit_id, db=db_session, user=user)
     return habit
@@ -52,7 +52,7 @@ def update_habit(
     habit_id: int,
     new_habit: HabitUpdate,
     db_session: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    user: User = Depends(require_verified_email)
 ):
     update_data = new_habit.model_dump(exclude_unset=True)
 
@@ -68,7 +68,7 @@ def update_habit(
 @habit_router.delete("/habits/{habit_id}")
 def delete_habit(habit_id: int,
     db_session: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    user: User = Depends(require_verified_email)
 ):
     return delete(
         habit_id=habit_id,
