@@ -21,6 +21,7 @@ class UserBuild(BaseModel):
 class UserRead(BaseModel):
     id: int
     username: str
+    is_verified: bool
 
     class Config:
         from_attributes = True
