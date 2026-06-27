@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import secrets
 from db.models.core_models.email_verification_token_model import EmailVerificationToken
 from db.models.core_models.password_reset_token_model import PasswordResetToken
-from email_service import send_email
+from services.email_service import send_email
 from sqlalchemy.orm import Session
 from db.models.core_models import User
 from core.security import hash_password, verify_password
@@ -48,21 +48,38 @@ def login_user(db: Session, Username, Password):
 
     return user
 
-def generate_token(db: Session, user_id: int, token_type: str):
-    token_string = secrets.urlsafe_b64encode(secrets.token_bytes(32)).decode()
-    expires_at = datetime.utcnow() + timedelta(hours=24)
+def generate_token(
+    db: Session, 
+    user_id: int, 
+    token_type: str, 
+    expires_in_minutes: int | None = None
+):
+    """
+    Generate a token for the specified user 
+    and token type (email_verification or password_reset).
+    """
+    token_string = secrets.token_urlsafe(32)
+    """
+    If expires_at is provided, the token will expire at that time.
+    Otherwise, it will expire in 24 hours.
+    """
+    expires = None
+    if expires_in_minutes:
+        expires = datetime.utcnow() + timedelta(minutes=expires_in_minutes)
+    else:
+        expires = datetime.utcnow() + timedelta(hours=24)
 
     if token_type == "email_verification":
         token = EmailVerificationToken(
             user_id=user_id,
             token=token_string,
-            expires_at=expires_at
+            expires_at=expires
         )
     elif token_type == "password_reset":
         token = PasswordResetToken(
             user_id=user_id,
             token=token_string,
-            expires_at=expires_at
+            expires_at=expires
         )
     else:
         raise ValueError(f"Invalid token type: {token_type}")
@@ -100,7 +117,7 @@ def verify_email(db: Session, token: str):
     db.refresh(verification_token)
     db.refresh(user)
     
-    return verification_token
+    return user
 
 def resend_verification(db: Session, email: str):
     user = db.query(User).filter(User.email == email).first()
