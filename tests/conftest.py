@@ -8,17 +8,26 @@ from datetime import timedelta
 
 from main import app
 from db.session import Base, get_db
+from db.models.core_models.email_verification_token_model import EmailVerificationToken
 
 @pytest.fixture
-def test_db(tmp_path):
+def db_session(tmp_path):
     db_file = tmp_path / "test.db"
     engine = create_engine(f"sqlite:///{db_file}", connect_args={"check_same_thread": False})
     api_test_session = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     
     Base.metadata.create_all(bind=engine)
 
+    test_db = api_test_session()
+    try: 
+        yield test_db
+    finally:
+        test_db.close()
+
+@pytest.fixture
+def test_db(db_session):
     def override_get_db():
-        db = api_test_session()
+        db = db_session
         try: 
             yield db
         finally:
@@ -37,30 +46,40 @@ def client2(test_db):
         yield c
 
 @pytest.fixture
-def auth_client1(client1):
+def auth_client1(client1, db_session):
     user_payload1 = {
         "username": "test_user1", 
-        "password": "test_password1"
+        "password": "test_password1",
+        "email": "test_user1@example.com"
     }
     register_user = client1.post("/register", json=user_payload1)
+    email_verification_token = db_session.query(EmailVerificationToken).filter(
+        EmailVerificationToken.user_id == register_user.json()["id"]
+    ).first().token
     login_user = client1.post("/login", json=user_payload1)
+    verification_response = client1.get(f"/verify-email?token={email_verification_token}")
     
-    token = login_user.json()["access_token"]
-    client1.headers = {"Authorization": f"Bearer {token}"}
-        
+    jwt_token = login_user.json()["access_token"]
+    client1.headers = {"Authorization": f"Bearer {jwt_token}"}
+
     return client1    
 
 @pytest.fixture
-def auth_client2(client2):
+def auth_client2(client2, db_session):
     user_payload2 = {
         "username": "test_user2", 
-        "password": "test_password2"
+        "password": "test_password2",
+        "email": "test_user2@example.com"
     }
     register_user = client2.post("/register", json=user_payload2)
+    email_verification_token = db_session.query(EmailVerificationToken).filter(
+        EmailVerificationToken.user_id == register_user.json()["id"]
+    ).first().token
     login_user = client2.post("/login", json=user_payload2)
+    verification_response = client2.get(f"/verify-email?token={email_verification_token}")
     
-    token = login_user.json()["access_token"]
-    client2.headers = {"Authorization": f"Bearer {token}"}
+    jwt_token = login_user.json()["access_token"]
+    client2.headers = {"Authorization": f"Bearer {jwt_token}"}
     
     return client2
 
@@ -81,6 +100,7 @@ def api_habit_factory():
         habit = auth_client.post("/habits", json=habit_payload)
 
         data = habit.json()
+        print("DEBUG: habit response", data)
         assert data["id"] is not None
         for key, value in habit_payload.items():
             assert data[key] == value 
