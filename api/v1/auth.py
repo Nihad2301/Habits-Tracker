@@ -24,7 +24,11 @@ class AuthResponse(BaseModel):
     expires_in: int
 
 @auth_router.post("/register", response_model=UserRead, status_code=201)
-def register(user: UserBuild, db_session : Session = Depends(get_db)):
+def register(
+    user: UserBuild, 
+    db_session : Session = Depends(get_db), 
+    expires_at: int | None = None
+    ):
     registering_user = register_user(
         db=db_session, 
         Username=user.username,
@@ -35,7 +39,8 @@ def register(user: UserBuild, db_session : Session = Depends(get_db)):
     verification_token = generate_token(
         db=db_session, 
         user_id=registering_user.id,
-        token_type="email_verification"
+        token_type="email_verification",
+        expires_in_minutes=expires_at
         )
     send_email(
         email=registering_user.email, 
@@ -62,8 +67,7 @@ def login(logging_user: Login, session_db: Session = Depends(get_db)):
 
 @auth_router.get("/verify-email")
 def email_verification(token: str, db_session: Session = Depends(get_db)):
-    verify_email(token=token, db=db_session)
-    return {"message": "Email verified successfully"}
+    return verify_email(token=token, db=db_session)
 
 @auth_router.post("/resend-verification-email")
 def resend_verification_email(
