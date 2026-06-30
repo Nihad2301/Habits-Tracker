@@ -73,7 +73,6 @@ def test_verify_email_with_already_used_token(db_session, unauthenticated_client
     
     verification_response = unauthenticated_client.get(f"/verify-email?token={token.token}")
     assert verification_response.status_code == 200
-Please provide all the commands in a single message so I can paste them into my terminal at once instead of copying and pasting multiple times.
     
     verification_response = unauthenticated_client.get(f"/verify-email?token={token.token}")
     assert verification_response.status_code == 409

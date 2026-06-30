@@ -16,4 +16,5 @@ class User(Base):
     habit_analytics = relationship("HabitAnalytics", back_populates="user")
     weekly_stats = relationship("WeeklyStats", back_populates="user")
     monthly_stats = relationship("MonthlyStats", back_populates="user")
-    tokens = relationship("EmailVerificationToken", back_populates="user")
+    email_verification_tokens = relationship("EmailVerificationToken", back_populates="user")
+    password_reset_tokens = relationship("PasswordResetToken", back_populates="user")
