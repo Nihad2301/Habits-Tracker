@@ -31,7 +31,8 @@ def upgrade() -> None:
                existing_type=sa.DATETIME(),
                nullable=False,
                existing_server_default=sa.text('(CURRENT_TIMESTAMP)'))
-    op.create_unique_constraint('uq_habit_user_date', 'habits_completion', ['habit_id', 'user_id', 'completion_date'])
+    # Constraint uq_habit_user_date already exists in production
+    # op.create_unique_constraint('uq_habit_user_date', 'habits_completion', ['habit_id', 'user_id', 'completion_date'])
     op.alter_column('users', 'email',
                existing_type=sa.VARCHAR(),
                nullable=False)
@@ -44,7 +45,8 @@ def downgrade() -> None:
     op.alter_column('users', 'email',
                existing_type=sa.VARCHAR(),
                nullable=True)
-    op.drop_constraint('uq_habit_user_date', 'habits_completion', type_='unique')
+    # Constraint uq_habit_user_date already exists in production
+    # op.drop_constraint('uq_habit_user_date', 'habits_completion', type_='unique')
     op.alter_column('habits_completion', 'completion_time',
                existing_type=sa.DATETIME(),
                nullable=True,
