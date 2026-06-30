@@ -138,14 +138,14 @@ def resend_verification(db: Session, email: str):
     )
     return resend_email
 
-def password_reset(db: Session, email: str):
+def password_reset_request(db: Session, email: str, expires_at: int | None = None):
     user = db.query(User).filter(User.email == email).first()
     if not user:
         raise NotFoundError(
             message="User not found"
         )
     
-    token = generate_token(db, user.id, "password_reset")
+    token = generate_token(db, user.id, "password_reset", expires_at)
     resend_email = send_email(
         email=user.email,
         token=token.token,
@@ -179,7 +179,11 @@ def password_reset_verify(db: Session, token: str):
     
     return password_reset_token  
 
-def reset_password(db: Session, token: str, new_password: str):
+def password_reset_confirm(
+    db: Session, 
+    token: str, 
+    new_password: str
+):
     password_reset_token = password_reset_verify(db=db, token=token)
     user = db.query(User).filter(User.id == password_reset_token.user_id).first()
     if not user:

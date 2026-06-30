@@ -11,8 +11,8 @@ from services.auth_service import (
     generate_token, 
     verify_email,
     resend_verification,
-    password_reset,
-    reset_password
+    password_reset_request,
+    password_reset_confirm
     )
 from services.email_service import send_email
 
@@ -84,28 +84,28 @@ def resend_verification_email(
     resend_verification(db=db_session, email=email)
     return {"message": "Verification email sent successfully"}
 
-@auth_router.post("/password-reset")
-def password_reset_request(
+@auth_router.post("/reset-password/request")
+def reset_password_request(
     email: str = None, 
-    db_session: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_user)
+    db_session: Session = Depends(get_db),
+    expires_at: int | None = None
     ):
-    if current_user:
-        email = current_user.email
-    
     if not email:
         raise HTTPException(status_code=400, detail="Email is required")
     
-    password_reset(db=db_session, email=email)
+    password_reset_request(db=db_session, email=email, expires_at=expires_at)
     return {"message": "Password reset email sent successfully"}
 
-@auth_router.post("/reset-password")
-def reset_password_endpoint(
+@auth_router.post("/reset-password/confirm")
+def reset_password_confirm(
     token: str,
     new_password: str,
     db_session: Session = Depends(get_db)
     ):
-
-    reset_password(db=db_session, token=token, new_password=new_password)
+    password_reset_confirm(
+        db=db_session, 
+        token=token, 
+        new_password=new_password
+    )
     return {"message": "Password reset successfully"}
 
