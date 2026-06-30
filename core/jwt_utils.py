@@ -69,4 +69,3 @@ def require_verified_email(user: User = Depends(get_current_user)):
             detail="Email not verified"
         )
     return user
-

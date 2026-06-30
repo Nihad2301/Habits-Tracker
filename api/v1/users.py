@@ -16,9 +16,9 @@ def get_current_user(user: User = Depends(get_current_user)):
 
 @user_router.patch("/update-user", response_model=UserRead)
 def update_user(new_one: UserUpdate, 
-                user: User = Depends(require_verified_email), 
-                db_session: Session = Depends(get_db)
-                ):
+    user: User = Depends(require_verified_email), 
+    db_session: Session = Depends(get_db)
+    ):
     updated_data = new_one.model_dump(exclude_unset=True)
 
     updated_user = update(
