@@ -48,6 +48,25 @@ def login_user(db: Session, Username, Password):
 
     return user
 
+def logout_user(
+    db: Session,
+    user_id: int
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise NotFoundError(
+            message="User is not found"
+        )
+
+    user.last_logout = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
+    
+    return {
+        "message": "User logged out successfully",
+        "last_logout": user.last_logout.isoformat()
+    }
+
 def generate_token(
     db: Session, 
     user_id: int, 
@@ -201,3 +220,4 @@ def password_reset_confirm(
     db.commit()
     db.refresh(user)
     return user      
+    

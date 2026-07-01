@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from db.session import Base
 from sqlalchemy.orm import relationship
 
@@ -10,6 +10,7 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     is_verified = Column(Boolean, default=False)
+    last_logout = Column(DateTime, nullable=True)
 
     habits = relationship("Habit", back_populates="user")
     habit_completions = relationship("HabitCompletion", back_populates="user")

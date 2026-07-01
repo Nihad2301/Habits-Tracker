@@ -12,7 +12,8 @@ from services.auth_service import (
     verify_email,
     resend_verification,
     password_reset_request,
-    password_reset_confirm
+    password_reset_confirm,
+    logout_user
     )
 from services.email_service import send_email
 
@@ -108,4 +109,11 @@ def reset_password_confirm(
         new_password=new_password
     )
     return {"message": "Password reset successfully"}
+
+@auth_router.post("/logout")
+def logout(
+    current_user: User = Depends(get_current_user),
+    db_session: Session = Depends(get_db)
+    ):
+    return logout_user(db=db_session, user_id=current_user.id)
 
