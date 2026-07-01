@@ -36,7 +36,7 @@ def verify_token(token: str):
     except JWTError:
         raise InvalidTokenError()
 
-security = HTTPBearer()     
+security = HTTPBearer()
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security), 
