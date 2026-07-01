@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from db.models.core_models import User
 from core.security import hash_password, verify_password
 from exceptions import (
+    AllFieldsEmptyError,
     NotFoundError, 
     IncorrectPasswordError, 
     AlreadyExistsError, 
@@ -46,6 +47,32 @@ def login_user(db: Session, Username, Password):
     if not verified:
         raise IncorrectPasswordError()
 
+    return user
+
+def user_profile_update(
+    db: Session,
+    user_id: int,
+    full_name: str | None = None,
+    bio: str | None = None
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise NotFoundError(
+            message="User is not found"
+        )
+    if not full_name and not bio:
+        raise AllFieldsEmptyError(
+            message="At least one field (full_name or bio) must be provided"
+        )
+    
+    if full_name:
+        user.full_name = full_name
+    if bio:
+        user.bio = bio
+    
+    db.commit()
+    db.refresh(user)
+    
     return user
 
 def logout_user(

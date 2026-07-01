@@ -13,7 +13,8 @@ from services.auth_service import (
     resend_verification,
     password_reset_request,
     password_reset_confirm,
-    logout_user
+    logout_user,
+    user_profile_update
     )
 from services.email_service import send_email
 
@@ -116,4 +117,18 @@ def logout(
     db_session: Session = Depends(get_db)
     ):
     return logout_user(db=db_session, user_id=current_user.id)
+
+@auth_router.put("/profile")
+def update_profile(
+    full_name: str | None = None,
+    bio: str | None = None,
+    current_user: User = Depends(get_current_user),
+    db_session: Session = Depends(get_db)
+    ):
+    return user_profile_update(
+        db=db_session,
+        user_id=current_user.id,
+        full_name=full_name,
+        bio=bio
+        )
 
