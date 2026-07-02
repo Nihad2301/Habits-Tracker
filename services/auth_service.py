@@ -247,4 +247,23 @@ def password_reset_confirm(
     db.commit()
     db.refresh(user)
     return user      
+
+def update_user_preferences(
+    db: Session,
+    user_id: int,
+    language: str | None = None,
+    theme: str | None = None
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise NotFoundError(
+            message="User not found"
+        )
+    if language:
+        user.language = language
+    if theme:
+        user.theme = theme
+    db.commit()
+    db.refresh(user)
+    return user      
     

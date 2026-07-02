@@ -14,7 +14,8 @@ from services.auth_service import (
     password_reset_request,
     password_reset_confirm,
     logout_user,
-    user_profile_update
+    user_profile_update,
+    update_user_preferences
     )
 from services.email_service import send_email
 
@@ -130,5 +131,19 @@ def update_profile(
         user_id=current_user.id,
         full_name=full_name,
         bio=bio
+        )
+
+@auth_router.put("/preferences")
+def update_preferences(
+    language: str | None = None,
+    theme: str | None = None,
+    current_user: User = Depends(get_current_user),
+    db_session: Session = Depends(get_db)
+    ):
+    return update_user_preferences(
+        db=db_session,
+        user_id=current_user.id,
+        language=language,
+        theme=theme
         )
 
