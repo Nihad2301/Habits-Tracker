@@ -20,13 +20,18 @@ def get_db():
     finally:
         db.close()    
 
-def _commit_safely(db: Session, obj=None):
+def _commit_with_add(db: Session, obj):
     try:
-        if obj is not None:
-            db.add(obj)
-        db.commit()
-        if obj is not None:            
-            db.refresh(obj)
+        db.add(obj)
+        db.commit()           
+        db.refresh(obj)
     except SQLAlchemyError:
         db.rollback()  
-        raise        
+        raise     
+
+def _simple_commit(db: Session):
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()  
+        raise     
