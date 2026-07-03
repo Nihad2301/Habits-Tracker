@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from db.models.core_models import User
 from schemas.user_schema import UserRead, UserUpdate
+from schemas.response_schemas import MessageResponse
 from sqlalchemy.orm import Session
 from db.session import get_db
 from core.jwt_utils import get_current_user, require_verified_email
@@ -29,9 +30,10 @@ def update_user(new_one: UserUpdate,
     
     return updated_user   
     
-@user_router.delete("/delete-user", response_model=dict)
+@user_router.delete("/delete-user", response_model=MessageResponse)
 def delete_user(
     user: User = Depends(require_verified_email), 
     db_session: Session = Depends(get_db)
     ):
-    return delete(user=user, db=db_session)
+    delete(user=user, db=db_session)
+    return MessageResponse(message=f"{user.username} is deleted")

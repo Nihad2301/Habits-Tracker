@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import secrets
+from db.session import _simple_commit, _commit_with_add
 from db.models.core_models.email_verification_token_model import EmailVerificationToken
 from db.models.core_models.password_reset_token_model import PasswordResetToken
 from services.email_service import send_email
@@ -31,9 +32,7 @@ def register_user(db: Session, Username: str, Password: str, Email: str):
         email=Email
     )
 
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    _commit_with_add(db, new_user)
     return new_user
 
 def login_user(db: Session, Username, Password):
@@ -70,8 +69,7 @@ def user_profile_update(
     if bio:
         user.bio = bio
     
-    db.commit()
-    db.refresh(user)
+    _simple_commit(db)
     
     return user
 
@@ -86,13 +84,9 @@ def logout_user(
         )
 
     user.last_logout = datetime.utcnow()
-    db.commit()
-    db.refresh(user)
-    
-    return {
-        "message": "User logged out successfully",
-        "last_logout": user.last_logout.isoformat()
-    }
+    _simple_commit(db)
+
+    return user
 
 def generate_token(
     db: Session, 
@@ -130,9 +124,7 @@ def generate_token(
     else:
         raise ValueError(f"Invalid token type: {token_type}")
 
-    db.add(token)
-    db.commit()
-    db.refresh(token)
+    _commit_with_add(db, token)
     return token
     
 def verify_email(db: Session, token: str):
@@ -159,9 +151,7 @@ def verify_email(db: Session, token: str):
     user = db.query(User).filter(User.id == verification_token.user_id).first()
     user.is_verified = True
 
-    db.commit()
-    db.refresh(verification_token)
-    db.refresh(user)
+    _simple_commit(db)
     
     return user
 
@@ -220,8 +210,7 @@ def password_reset_verify(db: Session, token: str):
     
     password_reset_token.is_used = 1
 
-    db.commit()
-    db.refresh(password_reset_token)
+    _simple_commit(db)
     
     return password_reset_token  
 
@@ -244,26 +233,4 @@ def password_reset_confirm(
         raise WeakPasswordError()
         
     user.hashed_password = hash_password(new_password)
-    db.commit()
-    db.refresh(user)
-    return user      
-
-def update_user_preferences(
-    db: Session,
-    user_id: int,
-    language: str | None = None,
-    theme: str | None = None
-):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise NotFoundError(
-            message="User not found"
-        )
-    if language:
-        user.language = language
-    if theme:
-        user.theme = theme
-    db.commit()
-    db.refresh(user)
-    return user      
-    
+    _simple_commit(db)

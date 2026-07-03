@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from db.session import get_db
 from core.jwt_utils import get_current_user, require_verified_email
+from schemas.response_schemas import MessageResponse, SuccessResponse
 from services.habit_service import (
     retrieve_habit, 
     update,
@@ -14,7 +15,7 @@ from schemas.habit_schema import HabitBuild, HabitRead, HabitUpdate
 
 habit_router = APIRouter()
 
-@habit_router.post("/habits", response_model=HabitRead, status_code=201)
+@habit_router.post("/habits", response_model=SuccessResponse[HabitRead], status_code=201)
 def add_new_habit(
     habit: HabitBuild,
     current_one: User = Depends(require_verified_email),
@@ -28,26 +29,41 @@ def add_new_habit(
         **habit_data
     )
 
-    return new_one
+    return SuccessResponse(
+        message="Habit built successfully", 
+        data=new_one
+    )
 
-@habit_router.get("/habits", response_model=dict[str, list[HabitRead]])
+@habit_router.get(
+    "/habits", 
+    response_model=SuccessResponse[dict[str, list[HabitRead]]])
 def get_all_habits(
     db_session: Session = Depends(get_db), 
     user: User = Depends(require_verified_email)
 ):
     all_habits = get_all(db=db_session, user=user)
-    return {"habits": all_habits}
+    return SuccessResponse(
+        message="Habits retrieved successfully", 
+        data={"habits": all_habits}
+    )
 
-@habit_router.get("/habits/{habit_id}", response_model=HabitRead)
+@habit_router.get(
+    "/habits/{habit_id}", 
+    response_model=SuccessResponse[HabitRead])
 def get_habit(
     habit_id: int, 
     db_session: Session = Depends(get_db), 
     user: User = Depends(require_verified_email)
 ):
     habit = retrieve_habit(habit_id=habit_id, db=db_session, user=user)
-    return habit
+    return SuccessResponse(
+        message="Habit retrieved successfully", 
+        data=habit
+    )
 
-@habit_router.patch("/habits/{habit_id}", response_model=HabitRead)
+@habit_router.patch(
+    "/habits/{habit_id}", 
+    response_model=SuccessResponse[HabitRead])
 def update_habit(
     habit_id: int,
     new_habit: HabitUpdate,
@@ -63,15 +79,20 @@ def update_habit(
         **update_data
     )
 
-    return updated_habit
+    return SuccessResponse(
+        message="Habit updated successfully", 
+        data=updated_habit
+    )
 
-@habit_router.delete("/habits/{habit_id}")
+@habit_router.delete("/habits/{habit_id}", response_model=MessageResponse)
 def delete_habit(habit_id: int,
     db_session: Session = Depends(get_db),
     user: User = Depends(require_verified_email)
 ):
-    return delete(
+    delete(
         habit_id=habit_id,
         db=db_session,
         user=user
     )
+    
+    return MessageResponse(message=f"Habit with id {habit_id} is deleted")

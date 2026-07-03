@@ -4,7 +4,7 @@ from db.models.core_models import Habit
 from db.models.core_models import HabitCompletion
 from sqlalchemy.exc import IntegrityError
 from exceptions import NotFoundError, AlreadyMarkedTodayError, NotMarkedYetError
-from db.session import _commit_safely
+from db.session import _commit_with_add, _simple_commit
 from datetime import date, datetime
 import pytz
 from config import settings
@@ -57,7 +57,7 @@ def mark_completed_habit(habit_id: int, db: Session, user: User) -> HabitComplet
     )
 
     try:
-        _commit_safely(db=db, obj=completed_habit)
+        _commit_with_add(db=db, obj=completed_habit)
     except IntegrityError as e:
         if _is_already_marked_error(e):
             raise AlreadyMarkedTodayError()   
@@ -79,9 +79,7 @@ def unmark_completed_habit(db: Session, habit_id: int, user: User) -> str:
         raise NotMarkedYetError()
     
     db.delete(marked_habit)
-    db.commit()
-    
-    return f"Habit at id {habit_id} is unmarked"
+    _simple_commit(db=db)
 
 
 def show_marked_habits(db: Session, user: User) -> list[Habit]:

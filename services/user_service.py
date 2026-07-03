@@ -3,6 +3,7 @@ from db.models.core_models import User
 from core.security import hash_password
 from exceptions import NotFoundError, WeakPasswordError, AllFieldsEmptyError
 from core.jwt_utils import get_current_user
+from db.session import _simple_commit
 
 # TODO: Add 'Show_all_users' for admin only
 def show_all_users(db: Session):
@@ -26,8 +27,7 @@ def update(user: User, db: Session, username=None, password=None):
         hashed = hash_password(password)
         current_user.hashed_password = hashed
 
-    db.commit()
-    db.refresh(current_user)    
+    _simple_commit(db)
 
     return current_user 
  
@@ -39,8 +39,7 @@ def delete(user: User, db: Session):
         raise NotFoundError()
 
     db.delete(user)
-    db.commit()
+    _simple_commit(db)
 
-    return {"message": f"{user.username} is deleted"}      
 
 

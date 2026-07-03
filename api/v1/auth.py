@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from db.session import get_db
 from db.models.core_models import User
 from schemas.user_schema import UserBuild, UserRead, Login
+from schemas.response_schemas import SuccessResponse, MessageResponse
 from core.jwt_utils import make_access_token, get_current_user
 from services.auth_service import (
     register_user, 
@@ -14,8 +15,7 @@ from services.auth_service import (
     password_reset_request,
     password_reset_confirm,
     logout_user,
-    user_profile_update,
-    update_user_preferences
+    user_profile_update
     )
 from services.email_service import send_email
 
@@ -26,13 +26,13 @@ class AuthResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int
 
-@auth_router.post("/register", response_model=UserRead, status_code=201)
+@auth_router.post("/register", response_model=SuccessResponse[UserRead], status_code=201)
 def register(
     user: UserBuild, 
     db_session : Session = Depends(get_db), 
     expires_at: int | None = None
     ):
-    registering_user = register_user(
+    registered_user = register_user(
         db=db_session, 
         Username=user.username,
         Password=user.password,
@@ -41,19 +41,22 @@ def register(
 
     verification_token = generate_token(
         db=db_session, 
-        user_id=registering_user.id,
+        user_id=registered_user.id,
         token_type="email_verification",
         expires_in_minutes=expires_at
         )
     send_email(
-        email=registering_user.email, 
+        email=registered_user.email, 
         token=verification_token.token,
         email_type="email_verification"
         )
 
-    return registering_user
+    return SuccessResponse(
+        message="User registered successfully",
+        data=UserRead.model_validate(registered_user)
+    )
 
-@auth_router.post("/login", response_model=AuthResponse)
+@auth_router.post("/login", response_model=SuccessResponse[AuthResponse])
 def login(logging_user: Login, session_db: Session = Depends(get_db)):
     user = login_user(
         db=session_db,
@@ -63,16 +66,20 @@ def login(logging_user: Login, session_db: Session = Depends(get_db)):
     
     access_token = make_access_token(data={"sub": str(user.id)})
     
-    return AuthResponse(
-        access_token=access_token,
-        expires_in=1800
+    return SuccessResponse(
+        message="User logged in successfully",
+        data=AuthResponse(
+            access_token=access_token,
+            expires_in=1800
         )
+    )
 
-@auth_router.get("/verify-email")
+@auth_router.get("/verify-email", response_model=MessageResponse)
 def email_verification(token: str, db_session: Session = Depends(get_db)):
-    return verify_email(token=token, db=db_session)
+    verify_email(token=token, db=db_session)
+    return MessageResponse(message="Email verified successfully")
 
-@auth_router.post("/resend-verification-email")
+@auth_router.post("/resend-verification-email", response_model=MessageResponse)
 def resend_verification_email(
     email: str = None, 
     db_session: Session = Depends(get_db), 
@@ -85,9 +92,9 @@ def resend_verification_email(
         raise HTTPException(status_code=400, detail="Email is required")
     
     resend_verification(db=db_session, email=email)
-    return {"message": "Verification email sent successfully"}
+    return MessageResponse(message="Verification email sent successfully")
 
-@auth_router.post("/reset-password/request")
+@auth_router.post("/reset-password/request", response_model=MessageResponse)
 def reset_password_request(
     email: str = None, 
     db_session: Session = Depends(get_db),
@@ -97,9 +104,9 @@ def reset_password_request(
         raise HTTPException(status_code=400, detail="Email is required")
     
     password_reset_request(db=db_session, email=email, expires_at=expires_at)
-    return {"message": "Password reset email sent successfully"}
+    return MessageResponse(message="Password reset email sent successfully")
 
-@auth_router.post("/reset-password/confirm")
+@auth_router.post("/reset-password/confirm", response_model=MessageResponse)
 def reset_password_confirm(
     token: str,
     new_password: str,
@@ -110,40 +117,40 @@ def reset_password_confirm(
         token=token, 
         new_password=new_password
     )
-    return {"message": "Password reset successfully"}
+    
+    return MessageResponse(
+        message="Password reset successfully"
+    )
+    
 
-@auth_router.post("/logout")
+@auth_router.post("/logout", response_model=SuccessResponse)
 def logout(
     current_user: User = Depends(get_current_user),
     db_session: Session = Depends(get_db)
     ):
-    return logout_user(db=db_session, user_id=current_user.id)
+    user = logout_user(db=db_session, user_id=current_user.id)
+    return SuccessResponse(
+        message="User logged out successfully", 
+        data={"last_logout": user.last_logout.isoformat()}
+    )
 
-@auth_router.put("/profile")
+@auth_router.put("/profile", response_model=SuccessResponse)
 def update_profile(
     full_name: str | None = None,
     bio: str | None = None,
     current_user: User = Depends(get_current_user),
     db_session: Session = Depends(get_db)
     ):
-    return user_profile_update(
+    user = user_profile_update(
         db=db_session,
         user_id=current_user.id,
         full_name=full_name,
         bio=bio
-        )
+    )
+    return SuccessResponse(
+        message="Profile updated successfully",
+        data={"Full name": user.full_name, "Bio": user.bio}
+    )
 
-@auth_router.put("/preferences")
-def update_preferences(
-    language: str | None = None,
-    theme: str | None = None,
-    current_user: User = Depends(get_current_user),
-    db_session: Session = Depends(get_db)
-    ):
-    return update_user_preferences(
-        db=db_session,
-        user_id=current_user.id,
-        language=language,
-        theme=theme
-        )
+
 

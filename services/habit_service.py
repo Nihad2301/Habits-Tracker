@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from typing import Optional
 from db.models.core_models import User
 from db.models.core_models import Habit
-from db.session import _commit_safely
+from db.session import _commit_with_add, _simple_commit
 from exceptions import NotFoundError, AllFieldsEmptyError, AlreadyExistsError, ForbiddenError
 import pytz
 from datetime import datetime
@@ -32,10 +32,13 @@ def _get_owned_habit(db: Session, habit_id: int, user: User) -> Habit:
 
 
 def add_habit(
-        *,
-        user: User, db: Session, name=None, 
-        frequency=None, description=None
-        ) -> Habit:
+    *, 
+    user: User, 
+    db: Session, 
+    name=None, 
+    frequency=None, 
+    description=None
+) -> Habit:
     local_tz = pytz.timezone(settings.TIMEZONE)
     now = datetime.now(local_tz)
     
@@ -47,10 +50,8 @@ def add_habit(
         built_at=now
         )
 
-    db.add(new_habit)
-
     try:
-        _commit_safely(db=db, obj=new_habit)
+        _commit_with_add(db=db, obj=new_habit)
         return new_habit
     except IntegrityError as e:
         if _already_exists(e):
@@ -59,13 +60,11 @@ def add_habit(
 
 def get_all(db: Session, user: User) -> list[Habit]:
     all_habits = db.query(Habit).filter(Habit.user_id == user.id).all()
-
     return all_habits
 
 
 def retrieve_habit(habit_id: int, db: Session, user: User) -> Habit:
     habit = _get_owned_habit(db=db, habit_id=habit_id, user=user)
-
     return habit
 
 
@@ -95,7 +94,7 @@ def update(
             setattr(habit, field, value)           
 
     try:
-        _commit_safely(db=db, obj=habit)
+        _commit_with_add(db=db, obj=habit)
     except IntegrityError as e:
         if _already_exists(e):
             raise AlreadyExistsError("Habit already exists")
@@ -104,10 +103,9 @@ def update(
     return habit
 
 
-def delete(habit_id: int, db: Session, user: User) -> dict:
+def delete(habit_id: int, db: Session, user: User) -> None:
     habit = _get_owned_habit(db=db, habit_id=habit_id, user=user)
 
     db.delete(habit)
-    _commit_safely(db=db)
-    
-    return {"message": f"Habit with id {habit_id} is deleted"}
+    _simple_commit(db=db)
+

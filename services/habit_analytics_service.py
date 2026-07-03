@@ -1,6 +1,7 @@
 from db.models.core_models import User
 from db.models.habit_analytics_models import HabitAnalytics
 from db.models.core_models import HabitCompletion
+from db.session import _commit_with_add
 from sqlalchemy.orm import Session
 from services.habit_service import _get_owned_habit
 from schemas.habit_analytics_schemas import HabitAnalyticsSchema
@@ -121,17 +122,23 @@ def habit_analytics(*, db: Session, user: User, habit_id: int):
             best_streak=best_streak
         )
 
-        db.add(habit_analytics_info)
-        db.commit()
-        db.refresh(habit_analytics_info)
+        _commit_with_add(db=db, obj=habit_analytics_info)
 
-    return HabitAnalyticsSchema(
-        completion_rate=completion_rate(db=db, habit_id=habit.id, user=user),
-        streak_days=calculate_habit_streak(db=db, user=user, habit_id=habit.id),
-        longest_streak=find_best_streak(db=db, user=user, habit_id=habit.id),
-        average_completion_time=calculate_average_completion_time(db=db, user=user, habit_id=habit.id),
-        total_completions=total_completions(db=db, user=user, habit_id=habit.id)
-    )
+    rate_of_completions = completion_rate(db=db, habit_id=habit.id, user=user)
+    streak_days = calculate_habit_streak(db=db, user=user, habit_id=habit.id)
+    longest_streak = find_best_streak(db=db, user=user, habit_id=habit.id)
+    average_completion_time = calculate_average_completion_time(db=db, user=user, habit_id=habit.id)
+    all_completions = total_completions(db=db, user=user, habit_id=habit.id)
+    
+    # Return the analytics data
+    return {
+        "rate_of_completions": rate_of_completions,
+        "streak_days": streak_days,
+        "longest_streak": longest_streak,
+        "average_completion_time": average_completion_time,
+        "all_completions": all_completions
+    }
+    
 
 def _get_period_stats(completions: list, period_name: str, period_days: int) -> list:
     if not completions:
