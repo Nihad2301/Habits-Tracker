@@ -44,6 +44,10 @@ class UserUpdate(BaseModel):
 class Login(BaseModel):
     username: str
     password: str
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str
  
         
             

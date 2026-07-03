@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from db.session import get_db
 from db.models.core_models import User
-from schemas.user_schema import UserBuild, UserRead, Login
+from schemas.user_schema import UserBuild, UserRead, Login, PasswordResetConfirm
 from schemas.response_schemas import SuccessResponse, MessageResponse
 from core.jwt_utils import make_access_token, get_current_user
 from services.auth_service import (
@@ -108,14 +108,13 @@ def reset_password_request(
 
 @auth_router.post("/reset-password/confirm", response_model=MessageResponse)
 def reset_password_confirm(
-    token: str,
-    new_password: str,
+    password_reset_confirm_data: PasswordResetConfirm,
     db_session: Session = Depends(get_db)
     ):
     password_reset_confirm(
         db=db_session, 
-        token=token, 
-        new_password=new_password
+        token=password_reset_confirm_data.token, 
+        new_password=password_reset_confirm_data.new_password
     )
     
     return MessageResponse(
