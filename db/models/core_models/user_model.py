@@ -13,8 +13,6 @@ class User(Base):
     last_logout = Column(DateTime, nullable=True)
     full_name = Column(String, nullable=True)
     bio = Column(Text, nullable=True)
-    language = Column(String, default="en")
-    theme = Column(String, default="light")
 
     habits = relationship("Habit", back_populates="user")
     habit_completions = relationship("HabitCompletion", back_populates="user")
