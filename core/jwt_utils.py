@@ -46,8 +46,6 @@ def get_current_user(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not authorize"
         )
-    
-    print("Credentials:", credentials)
 
     if credentials is None:
         raise credentials_exception
