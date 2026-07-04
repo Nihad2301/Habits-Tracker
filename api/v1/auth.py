@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from db.session import get_db
 from db.models.core_models import User
-from schemas.user_schema import UserBuild, UserRead, Login, PasswordResetConfirm
+from schemas.user_schema import UserBuild, UserRead, Login, PasswordResetRequest, PasswordResetConfirm
 from schemas.response_schemas import SuccessResponse, MessageResponse
 from core.jwt_utils import make_access_token, get_current_user
 from services.auth_service import (

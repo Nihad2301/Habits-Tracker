@@ -1,8 +1,5 @@
 from db.session import Base
-from db.models.core_models.habit_model import Habit
-from db.models.core_models.user_model import User
 from sqlalchemy import Column, Date, DateTime, ForeignKey, Integer, UniqueConstraint
-from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 class HabitCompletion(Base):

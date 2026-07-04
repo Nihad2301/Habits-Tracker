@@ -2,7 +2,6 @@ from sqlalchemy.orm import Session
 from db.models.core_models import User
 from core.security import hash_password
 from exceptions import NotFoundError, WeakPasswordError, AllFieldsEmptyError
-from core.jwt_utils import get_current_user
 from db.session import _simple_commit
 
 # TODO: Add 'Show_all_users' for admin only

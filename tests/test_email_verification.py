@@ -15,7 +15,7 @@ def test_verification_token_generated_on_registration(db_session, unauthenticate
         EmailVerificationToken.user_id == id
     ).first()
     assert token is not None
-    assert token.is_used == False
+    assert not token.is_used
 
 def test_verify_email_with_valid_token(db_session, unauthenticated_client):
     register_payload = {
@@ -33,8 +33,8 @@ def test_verify_email_with_valid_token(db_session, unauthenticated_client):
     ).first()
 
     assert token is not None
-    assert token.is_used == False
-    assert register_response.json().get("data").get("is_verified") == False
+    assert not token.is_used
+    assert not register_response.json().get("data").get("is_verified")
     
     verification_response = unauthenticated_client.get(f"/verify-email?token={token.token}")
     assert verification_response.status_code == 200
@@ -43,8 +43,8 @@ def test_verify_email_with_valid_token(db_session, unauthenticated_client):
         EmailVerificationToken.user_id == id
     ).first()
     user = db_session.query(User).filter(User.id == id).first()
-    assert token.is_used == True
-    assert user.is_verified == True
+    assert token.is_used
+    assert user.is_verified
     
 def test_verify_email_with_invalid_token(auth_client1):
     verification_response = auth_client1.get("/verify-email?token=invalid_token")

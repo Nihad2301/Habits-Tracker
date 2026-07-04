@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from db.session import get_db
-from core.jwt_utils import get_current_user, require_verified_email
+from core.jwt_utils import require_verified_email
 from schemas.response_schemas import MessageResponse, SuccessResponse
 from services.habit_service import (
     retrieve_habit, 

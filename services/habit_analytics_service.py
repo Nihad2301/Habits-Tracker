@@ -4,7 +4,6 @@ from db.models.core_models import HabitCompletion
 from db.session import _commit_with_add
 from sqlalchemy.orm import Session
 from services.habit_service import _get_owned_habit
-from schemas.habit_analytics_schemas import HabitAnalyticsSchema
 import datetime
 
 
@@ -132,11 +131,11 @@ def habit_analytics(*, db: Session, user: User, habit_id: int):
     
     # Return the analytics data
     return {
-        "rate_of_completions": rate_of_completions,
+        "completion_rate": rate_of_completions,
         "streak_days": streak_days,
         "longest_streak": longest_streak,
         "average_completion_time": average_completion_time,
-        "all_completions": all_completions
+        "total_completions": all_completions
     }
     
 

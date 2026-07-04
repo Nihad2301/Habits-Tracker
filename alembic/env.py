@@ -1,14 +1,9 @@
 import os
 from logging.config import fileConfig
-
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
 from alembic import context
-
 from db.session import Base
-from db.models.core_models import User, Habit, HabitCompletion
-from db.models.habit_analytics_models import HabitAnalytics, WeeklyStats, MonthlyStats
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

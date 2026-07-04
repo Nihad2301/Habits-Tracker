@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from db.session import get_db
-from core.jwt_utils import get_current_user, require_verified_email
+from core.jwt_utils import require_verified_email
 from services.habit_completion_service import (
     mark_completed_habit, 
     unmark_completed_habit,
@@ -20,7 +20,7 @@ def mark_habit_as_completed(
     db_session: Session = Depends(get_db), 
     current_user: User = Depends(require_verified_email)
     ):
-    completed_habit = mark_completed_habit(
+    mark_completed_habit(
         habit_id=habit_id,
         db=db_session,
         user=current_user

@@ -1,9 +1,8 @@
-from sqlalchemy import Column, Float, Integer, DateTime, Date, ForeignKey, UniqueConstraint
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, Date, ForeignKey, UniqueConstraint
 from db.session import Base
-from db.models.core_models import User
-from db.models.core_models import Habit
-from db.models.core_models import HabitCompletion
+# from db.models.core_models import User
+# from db.models.core_models import Habit
+# from db.models.core_models import HabitCompletion
 from sqlalchemy.orm import relationship
 
 class WeeklyStats(Base):

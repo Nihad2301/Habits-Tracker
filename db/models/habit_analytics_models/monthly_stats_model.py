@@ -1,10 +1,9 @@
-from sqlalchemy import Column, Float, Integer, Date, ForeignKey, UniqueConstraint, DateTime
+from sqlalchemy import Column, Integer, Date, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from db.session import Base
-from sqlalchemy.sql import func
-from db.models.core_models import User
-from db.models.core_models import Habit
-from db.models.core_models import HabitCompletion
+# from db.models.core_models import User
+# from db.models.core_models import Habit
+# from db.models.core_models import HabitCompletion
 
 class MonthlyStats(Base):
     __tablename__ = "monthly_stats"

@@ -59,7 +59,7 @@ def auth_client1(client1, db_session):
         EmailVerificationToken.user_id == id
     ).first().token
     login_user = client1.post("/login", json=user_payload1)
-    verification_response = client1.get(f"/verify-email?token={email_verification_token}")
+    client1.get(f"/verify-email?token={email_verification_token}")
     
     jwt_token = login_user.json().get("data").get("access_token")
     client1.headers = {"Authorization": f"Bearer {jwt_token}"}
@@ -79,7 +79,7 @@ def auth_client2(client2, db_session):
         EmailVerificationToken.user_id == id
     ).first().token
     login_user = client2.post("/login", json=user_payload2)
-    verification_response = client2.get(f"/verify-email?token={email_verification_token}")
+    client2.get(f"/verify-email?token={email_verification_token}")
     
     jwt_token = login_user.json().get("data").get("access_token")
     client2.headers = {"Authorization": f"Bearer {jwt_token}"}

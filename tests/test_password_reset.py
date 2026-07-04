@@ -21,7 +21,7 @@ def test_password_reset_token_generated_on_request(db_session, unauthenticated_c
         PasswordResetToken.user_id == id
     ).first()
     assert token is not None
-    assert token.is_used == False
+    assert not token.is_used
 
 def test_reset_password_confirm(db_session, unauthenticated_client):
     register_payload = {
@@ -43,9 +43,7 @@ def test_reset_password_confirm(db_session, unauthenticated_client):
         PasswordResetToken.user_id == id
     ).first()
     assert token is not None
-    assert token.is_used == False
-
-    old_hashed_password = token.user.hashed_password
+    assert not token.is_used
     
     password_reset_confirm_response = unauthenticated_client.post(
         "reset-password/confirm",
@@ -100,7 +98,7 @@ def test_reset_password_confirm_with_expired_token(db_session, unauthenticated_c
         PasswordResetToken.user_id == id
     ).first()
     assert token is not None
-    assert token.is_used == False
+    assert not token.is_used
     
     password_reset_confirm_response = unauthenticated_client.post(
         "reset-password/confirm",
@@ -131,7 +129,7 @@ def test_reset_password_confirm_with_used_token(db_session, unauthenticated_clie
         PasswordResetToken.user_id == id
     ).first()
     assert token is not None
-    assert token.is_used == False
+    assert not token.is_used
     
     password_reset_confirm_response = unauthenticated_client.post(
         "reset-password/confirm",
@@ -145,7 +143,7 @@ def test_reset_password_confirm_with_used_token(db_session, unauthenticated_clie
     token = db_session.query(PasswordResetToken).filter(
         PasswordResetToken.user_id == id
     ).first()
-    assert token.is_used == True
+    assert token.is_used
     
     password_reset_confirm_response = unauthenticated_client.post(
         "reset-password/confirm",
@@ -177,7 +175,7 @@ def test_reset_password_confirm_with_weak_password(db_session, unauthenticated_c
         PasswordResetToken.user_id == id
     ).first()
     assert token is not None
-    assert token.is_used == False
+    assert not token.is_used
     
     password_reset_confirm_response = unauthenticated_client.post(
         "reset-password/confirm",
