@@ -225,10 +225,6 @@ def password_reset_confirm(
         raise NotFoundError(
             message="User not found"
         )
-    if not new_password:
-        raise ValueError(
-            message="New password is required"
-        )
     if len(new_password) < 8:
         raise WeakPasswordError()
         
