@@ -27,7 +27,7 @@ def test_login_success(unauthenticated_client):
     assert register_user.status_code == 201
     login_user = unauthenticated_client.post("/login", json=user_payload)
     assert login_user.status_code == 200
-    assert "access_token" in login_user.json()
+    assert "access_token" in login_user.json().get("data")
 
 def test_login_invalid_credentials(unauthenticated_client):
     correct_payload = {

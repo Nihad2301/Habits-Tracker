@@ -11,12 +11,14 @@ def test_password_reset_token_generated_on_request(db_session, unauthenticated_c
     assert register_response.status_code == 201
     
     password_reset_request_response = unauthenticated_client.post(
-        "reset-password/request?email=test_user@example.com"
+        "reset-password/request",
+        json={"email": "test_user@example.com"}
     )
     assert password_reset_request_response.status_code == 200
     
+    id = register_response.json().get("data").get("id")
     token = db_session.query(PasswordResetToken).filter(
-        PasswordResetToken.user_id == register_response.json()["id"]
+        PasswordResetToken.user_id == id
     ).first()
     assert token is not None
     assert token.is_used == False
@@ -31,12 +33,14 @@ def test_reset_password_confirm(db_session, unauthenticated_client):
     assert register_response.status_code == 201
     
     password_reset_request_response = unauthenticated_client.post(
-        "reset-password/request?email=test_user@example.com"
+        "reset-password/request",
+        json={"email": "test_user@example.com"}
     )
     assert password_reset_request_response.status_code == 200
-    
+
+    id = register_response.json().get("data").get("id")
     token = db_session.query(PasswordResetToken).filter(
-        PasswordResetToken.user_id == register_response.json()["id"]
+        PasswordResetToken.user_id == id
     ).first()
     assert token is not None
     assert token.is_used == False
@@ -47,19 +51,18 @@ def test_reset_password_confirm(db_session, unauthenticated_client):
         "reset-password/confirm",
         json={
             "token": token.token,
-            "new_password": "test_password"
+            "new_password": "test_password2"
         }
     )
     assert password_reset_confirm_response.status_code == 200
-    
-    user = db_session.query(User).filter(
-        User.id == register_response.json()["id"]
-    ).first()
+
+    id = register_response.json().get("data").get("id")
+    user = db_session.query(User).filter(User.id == id).first()
     assert user is not None
     assert not verify_password("test_password", user.hashed_password)
     assert verify_password("test_password2", user.hashed_password)
     
-def test_reset_password_confirm_invalid_token(db_session, unauthenticated_client):
+def test_reset_password_confirm_invalid_token(unauthenticated_client):
     register_payload = {
         "username": "test_user",
         "password": "test_password",
@@ -77,7 +80,7 @@ def test_reset_password_confirm_invalid_token(db_session, unauthenticated_client
     )
     assert password_reset_confirm.status_code == 404
 
-def test_reset_password_confirm_with_expires_token(db_session, unauthenticated_client):
+def test_reset_password_confirm_with_expired_token(db_session, unauthenticated_client):
     register_payload = {
         "username": "test_user",
         "password": "test_password",
@@ -87,12 +90,14 @@ def test_reset_password_confirm_with_expires_token(db_session, unauthenticated_c
     assert register_response.status_code == 201
 
     password_reset_request_response = unauthenticated_client.post(
-        "reset-password/request?email=test_user@example.com&expires_at=-1"
+        "reset-password/request?expires_at=-1",
+        json={"email": "test_user@example.com"}
     )
     assert password_reset_request_response.status_code == 200
     
+    id = register_response.json().get("data").get("id")
     token = db_session.query(PasswordResetToken).filter(
-        PasswordResetToken.user_id == register_response.json()["id"]
+        PasswordResetToken.user_id == id
     ).first()
     assert token is not None
     assert token.is_used == False
@@ -116,12 +121,14 @@ def test_reset_password_confirm_with_used_token(db_session, unauthenticated_clie
     assert register_response.status_code == 201
 
     password_reset_request_response = unauthenticated_client.post(
-        "reset-password/request?email=test_user@example.com"
+        "reset-password/request",
+        json={"email": "test_user@example.com"}
     )
     assert password_reset_request_response.status_code == 200
     
+    id = register_response.json().get("data").get("id")
     token = db_session.query(PasswordResetToken).filter(
-        PasswordResetToken.user_id == register_response.json()["id"]
+        PasswordResetToken.user_id == id
     ).first()
     assert token is not None
     assert token.is_used == False
@@ -136,7 +143,7 @@ def test_reset_password_confirm_with_used_token(db_session, unauthenticated_clie
     assert password_reset_confirm_response.status_code == 200
 
     token = db_session.query(PasswordResetToken).filter(
-        PasswordResetToken.user_id == register_response.json()["id"]
+        PasswordResetToken.user_id == id
     ).first()
     assert token.is_used == True
     
@@ -159,12 +166,15 @@ def test_reset_password_confirm_with_weak_password(db_session, unauthenticated_c
     assert register_response.status_code == 201
 
     password_reset_request_response = unauthenticated_client.post(
-        "reset-password/request?email=test_user@example.com"
+        "reset-password/request",
+        json={"email": "test_user@example.com"}
     )
+    print("DEBUG: PASSWORD RESET REQUEST RESPONSE:", password_reset_request_response.json())
     assert password_reset_request_response.status_code == 200
     
+    id = register_response.json().get("data").get("id")
     token = db_session.query(PasswordResetToken).filter(
-        PasswordResetToken.user_id == register_response.json()["id"]
+        PasswordResetToken.user_id == id
     ).first()
     assert token is not None
     assert token.is_used == False

@@ -3,7 +3,7 @@ def test_user_cannot_complete_same_habit_twice_a_day(
         ):
     habit = api_habit_factory(auth_client=auth_client1)
     
-    habit_id = habit.json()["id"]
+    habit_id = habit.json().get("data").get("id")
 
     first_completion = auth_client1.post(f"/habits/{habit_id}/complete")
     assert first_completion.status_code == 201, first_completion.text
@@ -17,11 +17,11 @@ def test_different_users_can_complete_their_own_habits_with_same_name(
         ):
     habit1 = api_habit_factory(auth_client=auth_client1)
 
-    habit1_id = habit1.json()["id"]
+    habit1_id = habit1.json().get("data").get("id")
     
     habit2 = api_habit_factory(auth_client=auth_client2)
 
-    habit2_id = habit2.json()["id"]
+    habit2_id = habit2.json().get("data").get("id")
 
     completed1_habit = auth_client1.post(f"/habits/{habit1_id}/complete")
     assert completed1_habit.status_code == 201, completed1_habit.text
@@ -35,7 +35,7 @@ def test_user_cannot_complete_other_users_habit(
         ):
     habit1 = api_habit_factory(auth_client=auth_client1)
 
-    habit1_id = habit1.json()["id"]
+    habit1_id = habit1.json().get("data").get("id")
 
     user2_complete_habit1 = auth_client2.post(f"/habits/{habit1_id}/complete")
     assert user2_complete_habit1.status_code == 404, user2_complete_habit1.text
@@ -46,7 +46,7 @@ def test_user_can_unmark_only_completed_habit(
         ):
     habit = api_habit_factory(auth_client=auth_client1)    
     
-    habit_id = habit.json()["id"]
+    habit_id = habit.json().get("data").get("id")
 
     unmark_not_completed_habit = auth_client1.delete(
         f"/habits/{habit_id}/complete"

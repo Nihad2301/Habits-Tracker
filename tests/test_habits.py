@@ -38,7 +38,7 @@ def test_user_cannot_access_other_users_habit(
     assert_status_code(response=habit1, status_code=201)
 
     # User2 tries to access user1's habit
-    habit_id = habit1.json()["id"]
+    habit_id = habit1.json().get("data").get("id")
     fetched = auth_client2.get(f"/habits/{habit_id}")
     assert fetched.status_code == 403, fetched.text
 

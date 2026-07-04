@@ -53,13 +53,15 @@ def auth_client1(client1, db_session):
         "email": "test_user1@example.com"
     }
     register_user = client1.post("/register", json=user_payload1)
+    print("DEBUG: REGISTER USER:", register_user.json())
+    id = register_user.json().get("data").get("id")
     email_verification_token = db_session.query(EmailVerificationToken).filter(
-        EmailVerificationToken.user_id == register_user.json()["id"]
+        EmailVerificationToken.user_id == id
     ).first().token
     login_user = client1.post("/login", json=user_payload1)
     verification_response = client1.get(f"/verify-email?token={email_verification_token}")
     
-    jwt_token = login_user.json()["access_token"]
+    jwt_token = login_user.json().get("data").get("access_token")
     client1.headers = {"Authorization": f"Bearer {jwt_token}"}
 
     return client1    
@@ -72,13 +74,14 @@ def auth_client2(client2, db_session):
         "email": "test_user2@example.com"
     }
     register_user = client2.post("/register", json=user_payload2)
+    id = register_user.json().get("data").get("id")
     email_verification_token = db_session.query(EmailVerificationToken).filter(
-        EmailVerificationToken.user_id == register_user.json()["id"]
+        EmailVerificationToken.user_id == id
     ).first().token
     login_user = client2.post("/login", json=user_payload2)
     verification_response = client2.get(f"/verify-email?token={email_verification_token}")
     
-    jwt_token = login_user.json()["access_token"]
+    jwt_token = login_user.json().get("data").get("access_token")
     client2.headers = {"Authorization": f"Bearer {jwt_token}"}
     
     return client2
@@ -100,10 +103,9 @@ def api_habit_factory():
         habit = auth_client.post("/habits", json=habit_payload)
 
         data = habit.json()
-        print("DEBUG: habit response", data)
-        assert data["id"] is not None
+        assert data["data"]["id"] is not None
         for key, value in habit_payload.items():
-            assert data[key] == value 
+            assert data["data"][key] == value 
             
         return habit
     return _api_habit_factory
