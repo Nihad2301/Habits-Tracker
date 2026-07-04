@@ -96,14 +96,11 @@ def resend_verification_email(
 
 @auth_router.post("/reset-password/request", response_model=MessageResponse)
 def reset_password_request(
-    email: str = None, 
+    password_reset_request_data: PasswordResetRequest,
     db_session: Session = Depends(get_db),
     expires_at: int | None = None
     ):
-    if not email:
-        raise HTTPException(status_code=400, detail="Email is required")
-    
-    password_reset_request(db=db_session, email=email, expires_at=expires_at)
+    password_reset_request(db=db_session, email=password_reset_request_data.email, expires_at=expires_at)
     return MessageResponse(message="Password reset email sent successfully")
 
 @auth_router.post("/reset-password/confirm", response_model=MessageResponse)
@@ -120,7 +117,6 @@ def reset_password_confirm(
     return MessageResponse(
         message="Password reset successfully"
     )
-    
 
 @auth_router.post("/logout", response_model=SuccessResponse)
 def logout(
