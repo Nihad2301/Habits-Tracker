@@ -1,10 +1,11 @@
 import pytest
 from jose import jwt
+from datetime import timedelta
+from unittest.mock import patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 from core.jwt_utils import make_access_token, SECRET_KEY, ALGORITHM
-from datetime import timedelta
 
 from main import app
 from db.session import Base, get_db
@@ -45,6 +46,12 @@ def client2(test_db):
     with TestClient(app) as c:
         yield c
 
+@pytest.fixture(autouse=True)
+def mock_send_email():
+    with patch("api.v1.auth.send_email", return_value=True) as mock1, \
+         patch("services.auth_service.send_email", return_value=True) as mock2:
+        yield mock1, mock2
+
 @pytest.fixture
 def auth_client1(client1, db_session):
     user_payload1 = {
@@ -53,7 +60,6 @@ def auth_client1(client1, db_session):
         "email": "test_user1@example.com"
     }
     register_user = client1.post("/register", json=user_payload1)
-    print("DEBUG: REGISTER USER:", register_user.json())
     id = register_user.json().get("data").get("id")
     email_verification_token = db_session.query(EmailVerificationToken).filter(
         EmailVerificationToken.user_id == id
