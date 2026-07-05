@@ -31,8 +31,19 @@ def register_user(db: Session, Username: str, Password: str, Email: str):
         hashed_password=hashed, 
         email=Email
     )
-
     _commit_with_add(db, new_user)
+
+    token = generate_token(
+        db=db,
+        user_id=new_user.id,
+        token_type="email_verification"
+    )
+    send_email(
+        email=new_user.email,
+        token=token.token,
+        email_type="email_verification"
+    )
+
     return new_user
 
 def login_user(db: Session, Username, Password):

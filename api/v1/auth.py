@@ -37,18 +37,6 @@ def register(
         Username=user.username,
         Password=user.password,
         Email=user.email
-        ) 
-
-    verification_token = generate_token(
-        db=db_session, 
-        user_id=registered_user.id,
-        token_type="email_verification",
-        expires_in_minutes=expires_at
-        )
-    send_email(
-        email=registered_user.email, 
-        token=verification_token.token,
-        email_type="email_verification"
         )
 
     return SuccessResponse(
