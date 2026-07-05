@@ -1,6 +1,7 @@
 from db.models.core_models.password_reset_token_model import PasswordResetToken
 from db.models.core_models.user_model import User
 from services.auth_service import verify_password
+
 def test_password_reset_token_generated_on_request(db_session, unauthenticated_client):
     register_payload = {
         "username": "test_user",
