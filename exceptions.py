@@ -68,6 +68,10 @@ class InvalidTokenError(AppException):
     default_message = "Token is invalid"
 
 
+class EmailDeliveryError(AppException):
+    status_code = 503
+    default_message = "Failed to send email"
+
 async def custom_exception_handler(request: Request, exc: AppException):
     error_data = CustomErrorResponse(
         status_code=exc.status_code,

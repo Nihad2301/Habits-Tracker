@@ -1,5 +1,6 @@
 import resend
 from config import settings
+from exceptions import EmailDeliveryError
 
 resend.api_key = settings.RESEND_API_KEY
 
@@ -35,7 +36,6 @@ def send_email(email: str, token: str, email_type: str):
         }
         
         resend.Emails.send(params)
-        return True
-    except Exception as e:
-        print(f"Failed to send email: {e}")
-        return False
+    except Exception:
+        raise EmailDeliveryError()
+        
