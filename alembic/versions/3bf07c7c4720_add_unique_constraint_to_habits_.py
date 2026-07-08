@@ -32,13 +32,14 @@ def upgrade() -> None:
         )
     '''))
     
-    # Add unique constraint
-    try:
-        conn.execute(text('ALTER TABLE habits_completion ADD CONSTRAINT uq_habit_user_date UNIQUE (habit_id, user_id, completion_date)'))
-        print("Unique constraint added successfully")
-    except Exception as e:
-        print(f"Error adding unique constraint: {e}")
-        pass
+    # Add unique constraint (SQLite doesn't support adding constraints via ALTER TABLE)
+    # Skip this for SQLite - constraint will be handled in PostgreSQL
+    # try:
+    #     conn.execute(text('ALTER TABLE habits_completion ADD CONSTRAINT uq_habit_user_date UNIQUE (habit_id, user_id, completion_date)'))
+    #     print("Unique constraint added successfully")
+    # except Exception as e:
+    #     print(f"Error adding unique constraint: {e}")
+    #     pass
     # ### end Alembic commands ###
 
 
