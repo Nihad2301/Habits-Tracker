@@ -83,6 +83,17 @@ Secrets (`SECRET_KEY`, `RESEND_API_KEY`, `DATABASE_URL`) live only in environmen
 
 Local development uses SQLite for simplicity; production uses PostgreSQL, set via `DATABASE_URL`. Migrations are managed with Alembic against whichever database is active.
 
+### Email configuration (Resend)
+
+The app uses Resend for transactional emails (email verification, password reset). **Important note:** The current configuration uses Resend's free tier, which only allows sending emails to the account holder's verified email address. This is suitable for development and personal testing.
+
+To send emails to arbitrary users (for production use), you would need to:
+1. Verify a custom domain in Resend (e.g., `yourdomain.com`)
+2. Update the `from` address in `services/email_service.py` to use your verified domain
+3. Ensure your `RESEND_API_KEY` has the appropriate permissions
+
+For now, the app is configured to send emails only to the developer's email address for testing purposes.
+
 ### Database design
 
 - **Relationships** (`relationship()`) between `User`, `Habit`, and `HabitCompletion` avoid manual re-querying to access related data.
