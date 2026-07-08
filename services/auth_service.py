@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import secrets
+import logging
 from db.session import _simple_commit, _commit_with_add
 from db.models.core_models.email_verification_token_model import EmailVerificationToken
 from db.models.core_models.password_reset_token_model import PasswordResetToken
@@ -15,6 +16,8 @@ from exceptions import (
     WeakPasswordError,
     ExpiredTokenError
 )
+
+logger = logging.getLogger(__name__)
 
 def register_user(db: Session, Username: str, Password: str, Email: str):
     exists = db.query(User).filter(User.username == Username).first()
@@ -43,7 +46,7 @@ def register_user(db: Session, Username: str, Password: str, Email: str):
         token=token.token,
         email_type="email_verification"
     )
-
+    logger.info(f"Registered user {new_user.username} with email {new_user.email}")
     return new_user
 
 def login_user(db: Session, Username, Password):
@@ -56,7 +59,7 @@ def login_user(db: Session, Username, Password):
     verified = verify_password(Password, user.hashed_password)
     if not verified:
         raise IncorrectPasswordError()
-
+    logger.info(f"User {user.username} logged in")
     return user
 
 def user_profile_update(
@@ -82,6 +85,7 @@ def user_profile_update(
     
     _simple_commit(db)
     
+    logger.info(f"User {user.username} profile updated")
     return user
 
 def logout_user(
@@ -97,6 +101,7 @@ def logout_user(
     user.last_logout = datetime.utcnow()
     _simple_commit(db)
 
+    logger.info(f"User {user.username} logged out")
     return user
 
 def generate_token(
@@ -136,6 +141,7 @@ def generate_token(
         raise ValueError(f"Invalid token type: {token_type}")
 
     _commit_with_add(db, token)
+    logger.debug(f"Generated {token_type} token: {token_string}")  # For development
     return token
     
 def verify_email(db: Session, token: str):
@@ -146,6 +152,8 @@ def verify_email(db: Session, token: str):
         raise NotFoundError(
             message="Verification token not found"
         )
+    
+    logger.info(f"Token found for user_id: {verification_token.user_id}")
     
     if verification_token.is_used:
         raise AlreadyExistsError(
@@ -160,6 +168,12 @@ def verify_email(db: Session, token: str):
     verification_token.is_used = 1
 
     user = db.query(User).filter(User.id == verification_token.user_id).first()
+    if not user:
+        raise NotFoundError(
+            message="User associated with token not found"
+        )
+    
+    logger.info(f"User found: {user.username}, email: {user.email}, id: {user.id}")
     user.is_verified = True
 
     _simple_commit(db)
@@ -168,6 +182,9 @@ def verify_email(db: Session, token: str):
 
 def resend_verification(db: Session, email: str):
     user = db.query(User).filter(User.email == email).first()
+    users = db.query(User).filter(User.email == email).all()
+    logger.info(f"Users: {[(user.id, user.username) for user in users]}")  # For development
+    logger.info(f"User Name: {user.username}")  # For development
     if not user:
         raise NotFoundError(
             message="User not found"
@@ -181,8 +198,9 @@ def resend_verification(db: Session, email: str):
     resend_email = send_email(
         email=user.email, 
         token=token.token, 
-        email_type="verification"
+        email_type="email_verification"
     )
+    logger.info(f"Resent verification email to {user.email}")
     return resend_email
 
 def password_reset_request(db: Session, email: str, expires_at: int | None = None):
@@ -198,6 +216,7 @@ def password_reset_request(db: Session, email: str, expires_at: int | None = Non
         token=token.token,
         email_type="password_reset"
     )
+    logger.info(f"Sent password reset email to {user.email}")
     return resend_email
 
 def password_reset_verify(db: Session, token: str):
@@ -223,6 +242,7 @@ def password_reset_verify(db: Session, token: str):
 
     _simple_commit(db)
     
+    logger.info(f"Password reset user {password_reset_token.user_id} verified")
     return password_reset_token  
 
 def password_reset_confirm(
@@ -241,3 +261,5 @@ def password_reset_confirm(
         
     user.hashed_password = hash_password(new_password)
     _simple_commit(db)
+    logger.info(f"Password reset user {user.id} confirmed")
+    return user
