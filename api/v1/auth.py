@@ -1,9 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from db.session import get_db
 from db.models.core_models import User
-from schemas.user_schema import UserBuild, UserRead, Login, PasswordResetRequest, PasswordResetConfirm
+from schemas.user_schema import (
+    UserBuild, 
+    UserRead, 
+    Login, 
+    PasswordResetRequest, 
+    PasswordResetConfirm, 
+    ResendVerificationEmail
+)
 from schemas.response_schemas import SuccessResponse, MessageResponse
 from core.jwt_utils import make_access_token, get_current_user
 from services.auth_service import (
@@ -69,17 +76,10 @@ def email_verification(token: str, db_session: Session = Depends(get_db)):
 
 @auth_router.post("/resend-verification-email", response_model=MessageResponse)
 def resend_verification_email(
-    email: str = None, 
-    db_session: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_user)
+    email_data: ResendVerificationEmail,
+    db_session: Session = Depends(get_db)
     ):
-    if current_user:
-        email = current_user.email
-     
-    if not email:
-        raise HTTPException(status_code=400, detail="Email is required")
-    
-    resend_verification(db=db_session, email=email)
+    resend_verification(db=db_session, email=email_data.email)
     return MessageResponse(message="Verification email sent successfully")
 
 @auth_router.post("/reset-password/request", response_model=MessageResponse)
@@ -91,19 +91,20 @@ def reset_password_request(
     password_reset_request(db=db_session, email=password_reset_request_data.email, expires_at=expires_at)
     return MessageResponse(message="Password reset email sent successfully")
 
-@auth_router.post("/reset-password/confirm", response_model=MessageResponse)
+@auth_router.post("/reset-password/confirm", response_model=SuccessResponse[UserRead])
 def reset_password_confirm(
     password_reset_confirm_data: PasswordResetConfirm,
     db_session: Session = Depends(get_db)
     ):
-    password_reset_confirm(
+    user = password_reset_confirm(
         db=db_session, 
         token=password_reset_confirm_data.token, 
         new_password=password_reset_confirm_data.new_password
     )
     
-    return MessageResponse(
-        message="Password reset successfully"
+    return SuccessResponse(
+        message="Password reset successfully",
+        data=UserRead.model_validate(user)
     )
 
 @auth_router.post("/logout", response_model=SuccessResponse)
