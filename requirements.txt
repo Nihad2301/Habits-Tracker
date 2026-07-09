@@ -13,3 +13,4 @@ psycopg2-binary==2.9.9
 pytz==2024.1
 resend==2.30.1
 ruff==0.15.20
+email-validator==2.1.0
