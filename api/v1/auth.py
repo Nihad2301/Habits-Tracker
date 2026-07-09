@@ -23,7 +23,6 @@ from services.auth_service import (
     logout_user,
     user_profile_update
     )
-from services.email_service import send_email
 
 auth_router = APIRouter()
 
@@ -35,18 +34,13 @@ class AuthResponse(BaseModel):
 @auth_router.post("/register", response_model=SuccessResponse[UserRead], status_code=201)
 def register(
     user: UserBuild, 
-    db_session : Session = Depends(get_db), 
-    expires_at: int | None = Query(
-        default=None, 
-        description="Expiration time in minutes"
-        )
+    db_session : Session = Depends(get_db)
     ):
     registered_user = register_user(
         db=db_session, 
         username=user.username,
         password=user.password,
-        email=user.email,
-        expires_at=expires_at
+        email=user.email
         )
 
     return SuccessResponse(
@@ -83,7 +77,7 @@ def resend_verification_email(
     db_session: Session = Depends(get_db)
     ):
     resend_verification(db=db_session, email=email_data.email)
-    return MessageResponse(message="Verification email sent successfully")
+    return MessageResponse(message="if an account exists, we sent a link")
 
 @auth_router.post("/reset-password/request", response_model=MessageResponse)
 def reset_password_request(
@@ -95,7 +89,7 @@ def reset_password_request(
         )
     ):
     password_reset_request(db=db_session, email=password_reset_request_data.email, expires_at=expires_at)
-    return MessageResponse(message="Password reset email sent successfully")
+    return MessageResponse(message="if an account exists, we sent a link")
 
 @auth_router.post("/reset-password/confirm", response_model=SuccessResponse[UserRead])
 def reset_password_confirm(

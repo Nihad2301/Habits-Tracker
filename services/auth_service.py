@@ -23,8 +23,7 @@ def register_user(
     db: Session, 
     username: str, 
     password: str, 
-    email: str,
-    expires_at: int | None = None
+    email: str
 ):
     exists = db.query(User).filter(User.username == username).first()
     if exists:
@@ -45,8 +44,7 @@ def register_user(
     token = generate_token(
         db=db,
         user_id=new_user.id,
-        token_type="email_verification",
-        expires_in_minutes=expires_at
+        token_type="email_verification"
     )
     send_email(
         email=new_user.email,
@@ -148,7 +146,6 @@ def generate_token(
         raise ValueError(f"Invalid token type: {token_type}")
 
     _commit_with_add(db, token)
-    logger.debug(f"Generated {token_type} token: {token_string}")  # For development
     return token
     
 def verify_email(db: Session, token: str):
@@ -189,42 +186,34 @@ def verify_email(db: Session, token: str):
 
 def resend_verification(db: Session, email: str):
     user = db.query(User).filter(User.email == email).first()
-    users = db.query(User).filter(User.email == email).all()
-    logger.info(f"Users: {[(user.id, user.username) for user in users]}")  # For development
-    logger.info(f"User Name: {user.username}")  # For development
     if not user:
-        raise NotFoundError(
-            message="User not found"
-        )
+        logger.error(f"User not found for email: {email}")
+        return
     if user.is_verified:
-        raise AlreadyExistsError(
-            message="User already verified"
-        )
+        logger.error(f"User {user.username} already verified")
+        return
     
     token = generate_token(db, user.id, "email_verification")    
-    resend_email = send_email(
+    send_email(
         email=user.email, 
         token=token.token, 
         email_type="email_verification"
     )
     logger.info(f"Resent verification email to {user.email}")
-    return resend_email
 
 def password_reset_request(db: Session, email: str, expires_at: int | None = None):
     user = db.query(User).filter(User.email == email).first()
     if not user:
-        raise NotFoundError(
-            message="User not found"
-        )
+        logger.error(f"User not found for email: {email}")
+        return
     
     token = generate_token(db, user.id, "password_reset", expires_at)
-    resend_email = send_email(
+    send_email(
         email=user.email,
         token=token.token,
         email_type="password_reset"
     )
     logger.info(f"Sent password reset email to {user.email}")
-    return resend_email
 
 def password_reset_verify(db: Session, token: str):
     password_reset_token = db.query(PasswordResetToken).filter(
