@@ -23,7 +23,8 @@ def register_user(
     db: Session, 
     username: str, 
     password: str, 
-    email: str
+    email: str,
+    expires_at: int | None = None  # For testing/debugging
 ):
     exists = db.query(User).filter(User.username == username).first()
     if exists:
@@ -44,7 +45,8 @@ def register_user(
     token = generate_token(
         db=db,
         user_id=new_user.id,
-        token_type="email_verification"
+        token_type="email_verification",
+        expires_in_minutes=expires_at  # For testing/debugging
     )
     send_email(
         email=new_user.email,
@@ -201,7 +203,7 @@ def resend_verification(db: Session, email: str):
     )
     logger.info(f"Resent verification email to {user.email}")
 
-def password_reset_request(db: Session, email: str, expires_at: int | None = None):
+def password_reset_request(db: Session, email: str, expires_at: int | None = None):  # For testing/debugging
     user = db.query(User).filter(User.email == email).first()
     if not user:
         logger.error(f"User not found for email: {email}")

@@ -48,9 +48,8 @@ def client2(test_db):
 
 @pytest.fixture(autouse=True)
 def mock_send_email():
-    with patch("api.v1.auth.send_email", return_value=True) as mock1, \
-         patch("services.auth_service.send_email", return_value=True) as mock2:
-        yield mock1, mock2
+    with patch("services.auth_service.send_email", return_value=True) as mock1:
+        yield mock1
 
 @pytest.fixture
 def auth_client1(client1, db_session):

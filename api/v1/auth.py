@@ -34,13 +34,18 @@ class AuthResponse(BaseModel):
 @auth_router.post("/register", response_model=SuccessResponse[UserRead], status_code=201)
 def register(
     user: UserBuild, 
-    db_session : Session = Depends(get_db)
+    db_session : Session = Depends(get_db),
+    expires_at: int | None = Query(
+        default=None, 
+        description="Token expiration time in minutes (for testing/debugging only)"
+        )
     ):
     registered_user = register_user(
         db=db_session, 
         username=user.username,
         password=user.password,
-        email=user.email
+        email=user.email,
+        expires_at=expires_at
         )
 
     return SuccessResponse(
