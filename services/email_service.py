@@ -1,6 +1,8 @@
 import resend
 from config import settings
-from exceptions import EmailDeliveryError
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 resend.api_key = settings.RESEND_API_KEY
 
@@ -36,6 +38,6 @@ def send_email(email: str, token: str, email_type: str):
         }
         
         resend.Emails.send(params)
-    except Exception:
-        raise EmailDeliveryError()
+    except Exception as e:
+        logger.error(f"Error sending email: {e}")
         

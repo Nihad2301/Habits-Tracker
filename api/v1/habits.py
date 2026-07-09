@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from db.session import get_db
 from core.jwt_utils import require_verified_email
@@ -11,7 +11,12 @@ from services.habit_service import (
     add_habit
     )
 from db.models.core_models import User
-from schemas.habit_schema import HabitBuild, HabitRead, HabitUpdate
+from schemas.habit_schema import (
+    HabitBuild, 
+    HabitRead, 
+    HabitUpdate, 
+    PaginatedResponse
+    )
 
 habit_router = APIRouter()
 
@@ -36,15 +41,27 @@ def add_new_habit(
 
 @habit_router.get(
     "/habits", 
-    response_model=SuccessResponse[dict[str, list[HabitRead]]])
+    response_model=SuccessResponse[PaginatedResponse]
+)
 def get_all_habits(
     db_session: Session = Depends(get_db), 
-    user: User = Depends(require_verified_email)
+    user: User = Depends(require_verified_email),
+    skip: int = Query(
+        default=0, 
+        ge=0, 
+        description="Number of habits to skip"
+    ),
+    limit: int = Query(
+        default=20, 
+        ge=1, 
+        le=1000, 
+        description="Maximum number of habits to return"
+    )
 ):
-    all_habits = get_all(db=db_session, user=user)
+    all_habits, total = get_all(db=db_session, user=user, skip=skip, limit=limit)
     return SuccessResponse(
         message="Habits retrieved successfully", 
-        data={"habits": all_habits}
+        data=PaginatedResponse(habits=all_habits, total=total)
     )
 
 @habit_router.get(

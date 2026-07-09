@@ -1,4 +1,5 @@
 import os
+import logging
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
@@ -18,6 +19,11 @@ from api.v1.users import user_router
 from api.v1.habits import habit_router
 from api.v1.habits_completion import completion_router
 from api.v1.habit_analytics import analytics_router
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
 app = FastAPI(
     title="Habits Tracker API",

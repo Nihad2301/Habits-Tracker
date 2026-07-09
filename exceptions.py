@@ -31,10 +31,6 @@ class AllFieldsEmptyError(AppException):
     status_code = 400
     default_message = "No fields provided for update"
 
-class OwnershipError(AppException):
-    status_code = 403
-    default_message = "You do not own it"
-
 class AlreadyExistsError(AppException):  
     status_code = 409
     default_message = "Already exists"
@@ -67,10 +63,13 @@ class InvalidTokenError(AppException):
     status_code = 401
     default_message = "Token is invalid"
 
+class NotAuthorizedError(AppException):
+    status_code = 401
+    default_message = "Could not authorize"
 
-class EmailDeliveryError(AppException):
-    status_code = 503
-    default_message = "Failed to send email"
+class EmailNotVerifiedError(AppException):
+    status_code = 403
+    default_message = "Email not verified"    
 
 async def custom_exception_handler(request: Request, exc: AppException):
     error_data = CustomErrorResponse(

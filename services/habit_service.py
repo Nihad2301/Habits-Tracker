@@ -58,9 +58,10 @@ def add_habit(
             raise AlreadyExistsError("Habit already exists")
 
 
-def get_all(db: Session, user: User) -> list[Habit]:
-    all_habits = db.query(Habit).filter(Habit.user_id == user.id).all()
-    return all_habits
+def get_all(db: Session, user: User, skip: int, limit: int) -> tuple[list[Habit], int]:
+    all_habits = db.query(Habit).filter(Habit.user_id == user.id).offset(skip).limit(limit).all()
+    total = db.query(Habit).filter(Habit.user_id == user.id).count()
+    return all_habits, total
 
 
 def retrieve_habit(habit_id: int, db: Session, user: User) -> Habit:
