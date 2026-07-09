@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from db.session import get_db
@@ -16,7 +16,6 @@ from core.jwt_utils import make_access_token, get_current_user
 from services.auth_service import (
     register_user, 
     login_user, 
-    generate_token, 
     verify_email,
     resend_verification,
     password_reset_request,
@@ -37,13 +36,17 @@ class AuthResponse(BaseModel):
 def register(
     user: UserBuild, 
     db_session : Session = Depends(get_db), 
-    expires_at: int | None = None
+    expires_at: int | None = Query(
+        default=None, 
+        description="Expiration time in minutes"
+        )
     ):
     registered_user = register_user(
         db=db_session, 
-        Username=user.username,
-        Password=user.password,
-        Email=user.email
+        username=user.username,
+        password=user.password,
+        email=user.email,
+        expires_at=expires_at
         )
 
     return SuccessResponse(
@@ -55,8 +58,8 @@ def register(
 def login(logging_user: Login, session_db: Session = Depends(get_db)):
     user = login_user(
         db=session_db,
-        Username=logging_user.username,
-        Password=logging_user.password
+        username=logging_user.username,
+        password=logging_user.password
         )
     
     access_token = make_access_token(data={"sub": str(user.id)})
@@ -86,7 +89,10 @@ def resend_verification_email(
 def reset_password_request(
     password_reset_request_data: PasswordResetRequest,
     db_session: Session = Depends(get_db),
-    expires_at: int | None = None
+    expires_at: int | None = Query(
+        default=None, 
+        description="Expiration time in minutes"
+        )
     ):
     password_reset_request(db=db_session, email=password_reset_request_data.email, expires_at=expires_at)
     return MessageResponse(message="Password reset email sent successfully")

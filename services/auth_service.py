@@ -19,27 +19,34 @@ from exceptions import (
 
 logger = logging.getLogger(__name__)
 
-def register_user(db: Session, Username: str, Password: str, Email: str):
-    exists = db.query(User).filter(User.username == Username).first()
+def register_user(
+    db: Session, 
+    username: str, 
+    password: str, 
+    email: str,
+    expires_at: int | None = None
+):
+    exists = db.query(User).filter(User.username == username).first()
     if exists:
         raise AlreadyExistsError(
             message="User already exists")
     
-    if len(Password) < 8:
+    if len(password) < 8:
         raise WeakPasswordError()
     
-    hashed = hash_password(Password)
+    hashed = hash_password(password)
     new_user = User(
-        username=Username, 
+        username=username, 
         hashed_password=hashed, 
-        email=Email
+        email=email
     )
     _commit_with_add(db, new_user)
 
     token = generate_token(
         db=db,
         user_id=new_user.id,
-        token_type="email_verification"
+        token_type="email_verification",
+        expires_in_minutes=expires_at
     )
     send_email(
         email=new_user.email,
@@ -49,14 +56,14 @@ def register_user(db: Session, Username: str, Password: str, Email: str):
     logger.info(f"Registered user {new_user.username} with email {new_user.email}")
     return new_user
 
-def login_user(db: Session, Username, Password):
-    user = db.query(User).filter(User.username == Username).first()
+def login_user(db: Session, username, password):
+    user = db.query(User).filter(User.username == username).first()
     if not user:
         raise NotFoundError(
             message="User is not found"
         )
     
-    verified = verify_password(Password, user.hashed_password)
+    verified = verify_password(password, user.hashed_password)
     if not verified:
         raise IncorrectPasswordError()
     logger.info(f"User {user.username} logged in")
