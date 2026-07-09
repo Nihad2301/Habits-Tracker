@@ -1,7 +1,8 @@
 def test_register_user(unauthenticated_client):
     user_payload = {
         "username": "test_user", 
-        "password": "test_password"
+        "password": "test_password",
+        "email": "test_user@example.com"
     }
     register_user = unauthenticated_client.post("/register", json=user_payload)
     assert register_user.status_code == 201
@@ -9,7 +10,8 @@ def test_register_user(unauthenticated_client):
 def test_register_duplicate_username(unauthenticated_client):
     user_payload = {
         "username": "test_user", 
-        "password": "test_password"
+        "password": "test_password",
+        "email": "test_user@example.com"
     }
     register_user = unauthenticated_client.post("/register", json=user_payload)
     assert register_user.status_code == 201
@@ -21,7 +23,8 @@ def test_register_duplicate_username(unauthenticated_client):
 def test_login_success(unauthenticated_client):
     user_payload = {
         "username": "test_user", 
-        "password": "test_password"
+        "password": "test_password",
+        "email": "test_user@example.com"
     }
     register_user = unauthenticated_client.post("/register", json=user_payload)
     assert register_user.status_code == 201
@@ -32,11 +35,13 @@ def test_login_success(unauthenticated_client):
 def test_login_invalid_credentials(unauthenticated_client):
     correct_payload = {
         "username": "test_user", 
-        "password": "correct_password"
+        "password": "correct_password",
+        "email": "test_user@example.com"
     }
     wrong_payload = {
         "username": "test_user", 
-        "password": "wrong_password"
+        "password": "wrong_password",
+        "email": "test_user@example.com"
     }
 
     register_user = unauthenticated_client.post("/register", json=correct_payload)
@@ -47,7 +52,8 @@ def test_login_invalid_credentials(unauthenticated_client):
 def test_login_nonexistent_user(unauthenticated_client):
     user_payload = {
         "username": "nonexistent_user", 
-        "password": "test_password"
+        "password": "test_password",
+        "email": "nonexistent_user@example.com"
     }
     login_user = unauthenticated_client.post("/login", json=user_payload)
     assert login_user.status_code == 404

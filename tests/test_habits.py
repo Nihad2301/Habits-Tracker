@@ -11,7 +11,7 @@ def test_same_user_cannot_build_duplicate_habit_name(
     habit2 = auth_client1.post("/habits", json={
         "name": "Test Habit",  
         "description": "Test Description", 
-        "frequency": "Every day"
+        "frequency": "daily"
     })  
     assert_status_code(response=habit2, status_code=409)
 

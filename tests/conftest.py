@@ -103,7 +103,7 @@ def api_habit_factory():
         habit_payload = {
             "name": "Test Habit", 
             "description": "Test Description", 
-            "frequency": "Every day"
+            "frequency": "daily"
             }
         
         habit = auth_client.post("/habits", json=habit_payload)
