@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from db.session import get_db
 from core.jwt_utils import require_verified_email
@@ -46,9 +46,11 @@ def unmark_habit(
 @completion_router.get("/all-habits-complete", response_model=SuccessResponse[list[HabitRead]])
 def marked_habits(
     db_session: Session = Depends(get_db), 
-    current_user: User = Depends(require_verified_email)
+    current_user: User = Depends(require_verified_email),
+    skip: int = Query(default=0, description="Number of habits to skip"),
+    limit: int = Query(default=20, description="Maximum number of habits to return")
     ):
-    marked_habits = show_marked_habits(db=db_session, user=current_user)
+    marked_habits = show_marked_habits(db=db_session, user=current_user, skip=skip, limit=limit)
     return SuccessResponse(
         message="Successfully retrieved marked habits", 
         data=marked_habits
