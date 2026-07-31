@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from db.session import get_db
 from db.models.core_models import User
@@ -36,10 +36,19 @@ def get_habit_analytics(
 def get_weekly_stats(
     habit_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_verified_email)
+    current_user: User = Depends(require_verified_email),
+    skip: int = Query(default=0, description="Number of weeks to skip"),
+    limit: int = Query(default=20, description="Maximum number of weeks to return")
 ):
     # Get weekly stats
-    weekly_stats = get_period_stats(db=db, user=current_user, habit_id=habit_id, period_name="week", period_days=7)
+    weekly_stats = get_period_stats(
+        db=db, 
+        user=current_user, 
+        habit_id=habit_id, 
+        period="weekly", 
+        skip=skip, 
+        limit=limit
+    )
     
     # Convert to schema format
     return SuccessResponse(
@@ -51,10 +60,19 @@ def get_weekly_stats(
 def get_monthly_stats(
     habit_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_verified_email)
+    current_user: User = Depends(require_verified_email),
+    skip: int = Query(default=0, description="Number of months to skip"),
+    limit: int = Query(default=20, description="Maximum number of months to return")
 ):
     # Get monthly stats
-    monthly_stats = get_period_stats(db=db, user=current_user, habit_id=habit_id, period_name="month", period_days=30)
+    monthly_stats = get_period_stats(
+        db=db, 
+        user=current_user, 
+        habit_id=habit_id, 
+        period="monthly", 
+        skip=skip, 
+        limit=limit
+    )
     
     # Convert to schema format
     return SuccessResponse(

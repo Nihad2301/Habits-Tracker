@@ -14,7 +14,7 @@ def calculate_habit_streak(db: Session, user: User, habit_id: int):
     ).order_by(HabitCompletion.completion_date.desc()).all()
         
     current_streak = 0
-    current_date = datetime.date.today()
+    current_date = datetime.datetime.now(datetime.UTC).date()
     for completion in completions:
         # Convert completion_date to date for comparison
         completion_date = completion.completion_date
@@ -107,7 +107,7 @@ def habit_analytics(*, db: Session, user: User, habit_id: int):
     habit_analytics_info = db.query(HabitAnalytics).filter(
         HabitAnalytics.habit_id == habit.id,
         HabitAnalytics.user_id == user.id,
-        HabitAnalytics.date == datetime.date.today()
+        HabitAnalytics.date == datetime.datetime.now(datetime.UTC).date()
         ).first()
 
     if not habit_analytics_info:
@@ -116,7 +116,7 @@ def habit_analytics(*, db: Session, user: User, habit_id: int):
         habit_analytics_info = HabitAnalytics(
             habit_id=habit.id,
             user_id=user.id,
-            date=datetime.date.today(),
+            date=datetime.datetime.now(datetime.UTC).date(),
             current_streak=current_streak,
             best_streak=best_streak
         )
@@ -137,36 +137,86 @@ def habit_analytics(*, db: Session, user: User, habit_id: int):
         "average_completion_time": average_completion_time,
         "total_completions": all_completions
     }
-    
 
-def _get_period_stats(completions: list, period_name: str, period_days: int) -> list:
+def _monthly_stats(completions: list) -> list:
     if not completions:
         return []
     
-    period_start = min(c.completion_date for c in completions)
-    total_days = (datetime.datetime.now().date() - period_start).days
-
-    period_stats = []
-
-    period_count = total_days // period_days + 1
+    latest_date = max(c.completion_date for c in completions)
+    earliest_date = min(c.completion_date for c in completions)
     
-    for i in range(period_count):
-        period_end = period_start + datetime.timedelta(days=period_days - 1)
-        period_completions = [
+    total_months = (latest_date.year - earliest_date.year) * 12 + \
+                   (latest_date.month - earliest_date.month) + 1
+
+    month_start = earliest_date.replace(day=1)
+    next_month = month_start.replace(month=month_start.month % 12 + 1, day=1)
+    month_end = next_month - datetime.timedelta(days=1)                   
+
+    monthly_stats = []
+    
+    for _ in range(total_months):
+        month_completions = [
             c for c in completions 
-            if period_start <= c.completion_date <= period_end
+            if month_start <= c.completion_date <= month_end
         ]
-        period_stats.append({
-            f"{period_name}_start": period_start,
-            "days_with_completions": len(period_completions)
+        monthly_stats.append({
+            "month_start": month_start,
+            "days_with_completions": len(month_completions)
         })
-        period_start += datetime.timedelta(days=period_days)
+        month_start = next_month
+        next_month = month_start.replace(month=month_start.month % 12 + 1, day=1)
+        month_end = next_month - datetime.timedelta(days=1)
     
-    return period_stats
+    return monthly_stats
+    
+def _weekly_stats(completions: list) -> list:
+    if not completions:
+        return []
+    
+    latest_date = max(c.completion_date for c in completions)
+    earliest_date = min(c.completion_date for c in completions)
+    
+    total_weeks = (latest_date - earliest_date).days // 7 + 1
+    
+    week_start = earliest_date - datetime.timedelta(days=earliest_date.weekday())
+    week_end = week_start + datetime.timedelta(days=6)
+    
+    weekly_stats = []
+    
+    for _ in range(total_weeks):
+        week_completions = [
+            c for c in completions 
+            if week_start <= c.completion_date <= week_end
+        ]
+        weekly_stats.append({
+            "week_start": week_start,
+            "days_with_completions": len(week_completions)
+        })
+        week_start += datetime.timedelta(days=7)
+        week_end = week_start + datetime.timedelta(days=6)
+    
+    return weekly_stats
 
-def get_period_stats(*, db: Session, user: User, habit_id: int, period_name: str, period_days: int):
+def get_period_stats(
+    period: str, 
+    db: Session, 
+    user: User, 
+    habit_id: int, 
+    skip: int, 
+    limit: int
+    ) -> list:
     completions = db.query(HabitCompletion).filter(
         HabitCompletion.habit_id == habit_id,
         HabitCompletion.user_id == user.id
-    ).all()
-    return _get_period_stats(completions, period_name=period_name, period_days=period_days)
+        ).all()
+    if period == "monthly":
+        return _monthly_stats(completions)[skip:skip+limit]
+    elif period == "weekly":
+        return _weekly_stats(completions)[skip:skip+limit]
+    else:
+        raise ValueError("Invalid period. Must be 'monthly' or 'weekly'")
+
+
+
+    
+    
