@@ -4,8 +4,11 @@ from db.models.core_models import HabitCompletion
 from db.session import _commit_with_add
 from sqlalchemy.orm import Session
 from services.habit_service import _get_owned_habit
+from config import settings
 import datetime
+import pytz
 
+local_tz = pytz.timezone(settings.TIMEZONE)
 
 def calculate_habit_streak(db: Session, user: User, habit_id: int):
     completions = db.query(HabitCompletion).filter(
@@ -14,7 +17,8 @@ def calculate_habit_streak(db: Session, user: User, habit_id: int):
     ).order_by(HabitCompletion.completion_date.desc()).all()
         
     current_streak = 0
-    current_date = datetime.datetime.now(datetime.UTC).date()
+
+    current_date = datetime.now(local_tz).date()
     for completion in completions:
         # Convert completion_date to date for comparison
         completion_date = completion.completion_date
@@ -107,7 +111,7 @@ def habit_analytics(*, db: Session, user: User, habit_id: int):
     habit_analytics_info = db.query(HabitAnalytics).filter(
         HabitAnalytics.habit_id == habit.id,
         HabitAnalytics.user_id == user.id,
-        HabitAnalytics.date == datetime.datetime.now(datetime.UTC).date()
+        HabitAnalytics.date == datetime.now(local_tz).date()
         ).first()
 
     if not habit_analytics_info:
@@ -116,7 +120,7 @@ def habit_analytics(*, db: Session, user: User, habit_id: int):
         habit_analytics_info = HabitAnalytics(
             habit_id=habit.id,
             user_id=user.id,
-            date=datetime.datetime.now(datetime.UTC).date(),
+            date=datetime.now(local_tz).date(),
             current_streak=current_streak,
             best_streak=best_streak
         )

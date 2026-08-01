@@ -100,6 +100,10 @@ For now, the app is configured to send emails only to the developer's email addr
 - **Composite unique constraint** on `HabitCompletion` (`habit_id`, `user_id`, `completion_date`) enforces "one completion per habit per user per day" at the database level — the natural place for this business rule, rather than relying solely on application-level checks that could be bypassed by a race condition or a bug elsewhere.
 - **Cascade delete** (`ondelete="CASCADE"`) on foreign keys ensures that deleting a user also removes their dependent rows (habits, completions), preventing orphaned records that would otherwise cause `AttributeError`s or broken references elsewhere in the app.
 
+### Known limitations
+
+- **Timezone handling is global, not per-user.** All date/time boundaries (habit completion dates, streak calculations, weekly/monthly analytics) use a single app-wide timezone (`settings.TIMEZONE`), not each user's actual location. This is correct and internally consistent for a single-timezone user base, but a user in a different timezone than the configured one could see completions grouped under the wrong day. A proper fix would add a `timezone` field to `User` and use it in place of the global setting throughout `habit_completion_service.py` and `habit_analytics_service.py` — a natural extension, not implemented here to keep scope focused.
+
 ### API response consistency
 
 Every successful response follows one of two shapes:

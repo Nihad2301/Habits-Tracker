@@ -9,6 +9,7 @@ from datetime import date, datetime
 import pytz
 from config import settings
 
+local_tz = pytz.timezone(settings.TIMEZONE)
 
 def _is_already_marked_error(e: IntegrityError) -> bool:
     msg = str(getattr(e, "orig", e)).lower()
@@ -45,7 +46,6 @@ def mark_completed_habit(habit_id: int, db: Session, user: User) -> HabitComplet
     habit = _get_owned_habit(db=db, habit_id=habit_id, user=user)
 
     # Get local timezone (you can change this to your specific timezone)
-    local_tz = pytz.timezone(settings.TIMEZONE)
     local_time = datetime.now(local_tz)
     local_date = local_time.date()
     
@@ -66,6 +66,8 @@ def mark_completed_habit(habit_id: int, db: Session, user: User) -> HabitComplet
    
 
 def unmark_completed_habit(db: Session, habit_id: int, user: User) -> str:
+    local_date = datetime.now(local_tz).date()
+
     habit = _get_owned_habit(db=db, habit_id=habit_id, user=user)
     if habit is None:
         raise NotFoundError()
@@ -73,7 +75,7 @@ def unmark_completed_habit(db: Session, habit_id: int, user: User) -> str:
     marked_habit = db.query(HabitCompletion).filter(
         HabitCompletion.habit_id == habit_id,
         HabitCompletion.user_id == user.id, 
-        HabitCompletion.completion_date == date.today()
+        HabitCompletion.completion_date == local_date
         ).first()
     if marked_habit is None:
         raise NotMarkedYetError()
@@ -82,15 +84,14 @@ def unmark_completed_habit(db: Session, habit_id: int, user: User) -> str:
     _simple_commit(db=db)
 
 
-def show_marked_habits(db: Session, user: User) -> list[Habit]:
-    local_tz = pytz.timezone(settings.TIMEZONE)
+def show_marked_habits(db: Session, user: User, skip: int, limit: int) -> list[Habit]:
     local_time = datetime.now(local_tz)
     local_date = local_time.date()
     
     habits = db.query(HabitCompletion).filter(
         HabitCompletion.user_id == user.id,
         HabitCompletion.completion_date == local_date
-    ).all()
+    ).offset(skip).limit(limit).all()
 
     return habits
 
