@@ -59,7 +59,7 @@ Routers handle HTTP concerns only — receiving requests and returning responses
 
 ### Centralized exception handling
 
-Instead of raising `HTTPException` throughout the codebase, the app defines a custom exception hierarchy (`AppException` and its subclasses — `WeakPasswordError`, `NotFoundError`, `AlreadyExistsError`, `EmailDeliveryError`, etc.), each carrying its own `status_code` and `default_message`. These are plain Python exceptions with zero dependency on FastAPI.
+Instead of raising `HTTPException` throughout the codebase, the app defines a custom exception hierarchy (`AppException` and its subclasses — `WeakPasswordError`, `NotFoundError`, `AlreadyExistsError`, etc.), each carrying its own `status_code` and `default_message`. These are plain Python exceptions with zero dependency on FastAPI.
 
 A small set of centralized exception handlers (`custom_exception_handler`, `validation_exception_handler`, `jwt_exception_handler`) is the *only* place in the app that translates an internal exception into an HTTP response. This means:
 
