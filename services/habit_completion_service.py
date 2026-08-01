@@ -61,6 +61,7 @@ def mark_completed_habit(habit_id: int, db: Session, user: User) -> HabitComplet
     except IntegrityError as e:
         if _is_already_marked_error(e):
             raise AlreadyMarkedTodayError()   
+        raise    
         
     return completed_habit
    
