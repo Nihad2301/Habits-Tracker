@@ -5,7 +5,7 @@ from db.models.core_models import HabitCompletion
 from sqlalchemy.exc import IntegrityError
 from exceptions import NotFoundError, AlreadyMarkedTodayError, NotMarkedYetError
 from db.session import _commit_with_add, _simple_commit
-from datetime import date, datetime
+from datetime import datetime
 import pytz
 from config import settings
 

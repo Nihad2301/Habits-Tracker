@@ -5,7 +5,7 @@ from db.session import _commit_with_add
 from sqlalchemy.orm import Session
 from services.habit_service import _get_owned_habit
 from config import settings
-import datetime
+from datetime import datetime, timedelta
 import pytz
 
 local_tz = pytz.timezone(settings.TIMEZONE)
@@ -24,7 +24,7 @@ def calculate_habit_streak(db: Session, user: User, habit_id: int):
         completion_date = completion.completion_date
         if completion_date == current_date:
             current_streak += 1
-            current_date -= datetime.timedelta(days=1)
+            current_date -= timedelta(days=1)
         else:
             break
     
@@ -154,7 +154,7 @@ def _monthly_stats(completions: list) -> list:
 
     month_start = earliest_date.replace(day=1)
     next_month = month_start.replace(month=month_start.month % 12 + 1, day=1)
-    month_end = next_month - datetime.timedelta(days=1)                   
+    month_end = next_month - timedelta(days=1)                   
 
     monthly_stats = []
     
@@ -169,7 +169,7 @@ def _monthly_stats(completions: list) -> list:
         })
         month_start = next_month
         next_month = month_start.replace(month=month_start.month % 12 + 1, day=1)
-        month_end = next_month - datetime.timedelta(days=1)
+        month_end = next_month - timedelta(days=1)
     
     return monthly_stats
     
@@ -182,8 +182,8 @@ def _weekly_stats(completions: list) -> list:
     
     total_weeks = (latest_date - earliest_date).days // 7 + 1
     
-    week_start = earliest_date - datetime.timedelta(days=earliest_date.weekday())
-    week_end = week_start + datetime.timedelta(days=6)
+    week_start = earliest_date - timedelta(days=earliest_date.weekday())
+    week_end = week_start + timedelta(days=6)
     
     weekly_stats = []
     
@@ -196,8 +196,8 @@ def _weekly_stats(completions: list) -> list:
             "week_start": week_start,
             "days_with_completions": len(week_completions)
         })
-        week_start += datetime.timedelta(days=7)
-        week_end = week_start + datetime.timedelta(days=6)
+        week_start += timedelta(days=7)
+        week_end = week_start + timedelta(days=6)
     
     return weekly_stats
 
