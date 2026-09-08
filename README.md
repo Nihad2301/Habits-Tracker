@@ -14,7 +14,7 @@ A backend API for tracking daily habits, streaks, and completion analytics — b
 - **Railway** — deployment
 - **pytest** — testing
 - **ruff** — linting
-- **GitHub Actions** — CI/CD
+- **GitHub Actions** — CI
 
 ## Getting Started
 
@@ -122,7 +122,7 @@ Sensitive data (passwords, tokens, emails tied to a specific action) is always p
 - Both happy paths and edge cases are covered (expired tokens, reused tokens, duplicate usernames, unauthorized access, etc.).
 - External side effects are mocked — specifically, `send_email` is mocked across the test suite so tests validate "did the app correctly attempt to send an email with the right data," without making real network calls to Resend. This keeps the suite fast, reliable, and independent of third-party service availability or API key state.
 
-### CI/CD
+### CI
 
 Every push and pull request to `main` runs, in order: dependency install → lint (`ruff check .`) → test suite (`pytest`). A failure at either the linting or testing stage blocks the pipeline, catching issues before they reach production. Railway deploys automatically from `main` once CI passes.
 
