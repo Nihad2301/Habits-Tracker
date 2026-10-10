@@ -8,6 +8,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from jose import JWTError
+import redis
+from config import settings
 from exceptions import (
     AppException,
     custom_exception_handler,
@@ -24,6 +26,8 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+
+redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 app = FastAPI(
     title="Habits Tracker API",
@@ -45,11 +49,26 @@ app.add_middleware(
 
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
+    db_status = "connected"
+    redis_status = "connected"
+    
     try:
         db.execute(text("SELECT 1"))
-        return {"status": "ok", "database": "connected"}
     except Exception:
-        raise HTTPException(status_code=503, detail={"status": "error", "database": "disconnected"})
+        db_status = "disconnected"
+    
+    try:
+        redis_client.ping()
+    except Exception:
+        redis_status = "disconnected"
+    
+    if db_status == "disconnected" or redis_status == "disconnected":
+        raise HTTPException(
+            status_code=503, 
+            detail={"status": "error", "database": db_status, "redis": redis_status}
+        )
+    
+    return {"status": "ok", "database": db_status, "redis": redis_status}
 
 app.add_exception_handler(AppException, custom_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)

@@ -39,9 +39,7 @@ def add_new_habit(
         data=new_one
     )
 
-@habit_router.get(
-    "/habits", 
-    response_model=SuccessResponse[PaginatedResponse]
+@habit_router.get("/habits", response_model=SuccessResponse[PaginatedResponse]
 )
 def get_all_habits(
     db_session: Session = Depends(get_db), 
@@ -64,23 +62,20 @@ def get_all_habits(
         data=PaginatedResponse(habits=all_habits, total=total)
     )
 
-@habit_router.get(
-    "/habits/{habit_id}", 
-    response_model=SuccessResponse[HabitRead])
+@habit_router.get("/habits/{habit_id}", response_model=SuccessResponse[HabitRead])
 def get_habit(
     habit_id: int, 
     db_session: Session = Depends(get_db), 
     user: User = Depends(require_verified_email)
 ):
-    habit = retrieve_habit(habit_id=habit_id, db=db_session, user=user)
+    habit_dict = retrieve_habit(habit_id=habit_id, db=db_session, user=user)
+    habit = HabitRead(**habit_dict)
     return SuccessResponse(
         message="Habit retrieved successfully", 
         data=habit
     )
 
-@habit_router.patch(
-    "/habits/{habit_id}", 
-    response_model=SuccessResponse[HabitRead])
+@habit_router.patch("/habits/{habit_id}", response_model=SuccessResponse[HabitRead])
 def update_habit(
     habit_id: int,
     new_habit: HabitUpdate,

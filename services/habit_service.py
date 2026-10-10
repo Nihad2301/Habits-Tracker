@@ -8,6 +8,14 @@ from exceptions import NotFoundError, AllFieldsEmptyError, AlreadyExistsError, F
 import pytz
 from datetime import datetime
 from config import settings
+import json
+import redis
+import logging
+import time
+
+logger = logging.getLogger(__name__)
+
+redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
 
 def _already_exists(e: IntegrityError) -> bool:
     msg = str(getattr(e, "orig", e)).lower()
@@ -64,9 +72,33 @@ def get_all(db: Session, user: User, skip: int, limit: int) -> tuple[list[Habit]
     return all_habits, total
 
 
-def retrieve_habit(habit_id: int, db: Session, user: User) -> Habit:
+def retrieve_habit(habit_id: int, db: Session, user: User) -> dict:
+    cache_key = f"habit:{user.id}:{habit_id}"
+    
+    start_time = time.time()
+    cached_data = redis_client.get(cache_key)
+    
+    if cached_data:
+        elapsed = (time.time() - start_time) * 1000
+        logger.info(f"CACHE HIT: habit_id={habit_id}, user_id={user.id} - {elapsed:.2f}ms")
+        return json.loads(cached_data)
+    
+    logger.info(f"CACHE MISS: habit_id={habit_id}, user_id={user.id} - querying database")
     habit = _get_owned_habit(db=db, habit_id=habit_id, user=user)
-    return habit
+    
+    habit_dict = {
+        "id": habit.id,
+        "name": habit.name,
+        "description": habit.description,
+        "frequency": habit.frequency,
+        "built_at": habit.built_at.isoformat() if habit.built_at else None
+    }
+    
+    redis_client.setex(cache_key, 60, json.dumps(habit_dict))
+    elapsed = (time.time() - start_time) * 1000
+    logger.info(f"CACHED: habit_id={habit_id}, user_id={user.id} with 60s TTL - {elapsed:.2f}ms")
+    
+    return habit_dict
 
 
 def update(
