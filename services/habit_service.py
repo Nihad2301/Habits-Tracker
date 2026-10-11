@@ -74,8 +74,8 @@ def get_all(db: Session, user: User, skip: int, limit: int) -> tuple[list[Habit]
 
 def retrieve_habit(habit_id: int, db: Session, user: User) -> dict:
     cache_key = f"habit:{user.id}:{habit_id}"
-    
     start_time = time.time()
+    
     cached_data = redis_client.get(cache_key)
     
     if cached_data:
@@ -84,7 +84,11 @@ def retrieve_habit(habit_id: int, db: Session, user: User) -> dict:
         return json.loads(cached_data)
     
     logger.info(f"CACHE MISS: habit_id={habit_id}, user_id={user.id} - querying database")
+    
+    db_start = time.time()
     habit = _get_owned_habit(db=db, habit_id=habit_id, user=user)
+    db_time = (time.time() - db_start) * 1000
+    logger.info(f"DATABASE QUERY: habit_id={habit_id}, user_id={user.id} - {db_time:.2f}ms")
     
     habit_dict = {
         "id": habit.id,
@@ -95,8 +99,9 @@ def retrieve_habit(habit_id: int, db: Session, user: User) -> dict:
     }
     
     redis_client.setex(cache_key, 60, json.dumps(habit_dict))
-    elapsed = (time.time() - start_time) * 1000
-    logger.info(f"CACHED: habit_id={habit_id}, user_id={user.id} with 60s TTL - {elapsed:.2f}ms")
+    total_time = (time.time() - start_time) * 1000
+    redis_time = total_time - db_time
+    logger.info(f"CACHED: habit_id={habit_id}, user_id={user.id} with 60s TTL - total: {total_time:.2f}ms (db: {db_time:.2f}ms, redis: {redis_time:.2f}ms)")
     
     return habit_dict
 
